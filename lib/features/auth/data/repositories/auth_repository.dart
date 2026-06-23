@@ -1,0 +1,60 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_model.dart';
+
+class AuthRepository {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  Stream<UserModel?> get authStateChanges => _auth.authStateChanges().asyncMap(
+    (user) async {
+      if (user == null) return null;
+      return _fetchUser(user.uid);
+    },
+  );
+
+  Future<UserModel> _fetchUser(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+    return UserModel.fromFirestore(doc);
+  }
+
+  Future<UserModel> signIn(String email, String password) async {
+    final cred = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return _fetchUser(cred.user!.uid);
+  }
+
+  Future<UserModel> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+    required UserRole role,
+  }) async {
+    final cred = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = UserModel(
+      uid: cred.user!.uid,
+      email: email,
+      fullName: fullName,
+      role: role,
+      createdAt: DateTime.now(),
+      isOnboarded: false,
+    );
+    await _db.collection('users').doc(user.uid).set(user.toFirestore());
+    return user;
+  }
+
+  Future<void> signOut() => _auth.signOut();
+
+  Future<UserModel> completeOnboarding(String uid) async {
+    await _db.collection('users').doc(uid).update({'isOnboarded': true});
+    return _fetchUser(uid);
+  }
+
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordResetEmail(email: email);
+}
