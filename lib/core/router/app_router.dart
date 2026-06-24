@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
@@ -26,23 +26,37 @@ class AppRoutes {
   static const startupRegistration = '/startup/register';
 }
 
-GoRouter buildRouter(BuildContext context) {
+class _RouterRefreshStream extends ChangeNotifier {
+  _RouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _sub = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription _sub;
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+}
+
+GoRouter buildRouter(AuthCubit authCubit) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
+    refreshListenable: _RouterRefreshStream(authCubit.stream),
     redirect: (context, state) {
-      final authState = context.read<AuthCubit>().state;
-      final isOnAuthPage = state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.signup;
+      final authState = authCubit.state;
+      final loc = state.matchedLocation;
+      final isOnAuthPage = loc == AppRoutes.login || loc == AppRoutes.signup;
+
+      if (authState is AuthInitial) return null;
 
       if (authState is AuthAuthenticated) {
         if (!authState.user.isOnboarded) return AppRoutes.onboarding;
-        if (isOnAuthPage || state.matchedLocation == AppRoutes.splash) {
-          return AppRoutes.home;
-        }
+        if (isOnAuthPage || loc == AppRoutes.splash) return AppRoutes.home;
       } else if (authState is AuthUnauthenticated) {
-        if (!isOnAuthPage && state.matchedLocation != AppRoutes.splash) {
-          return AppRoutes.login;
-        }
+        if (!isOnAuthPage) return AppRoutes.login;
       }
       return null;
     },
