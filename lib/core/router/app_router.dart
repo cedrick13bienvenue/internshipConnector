@@ -56,6 +56,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
         if (!authState.user.isOnboarded) return AppRoutes.onboarding;
         if (isOnAuthPage || loc == AppRoutes.splash) return AppRoutes.home;
       } else if (authState is AuthUnauthenticated) {
+        if (loc == AppRoutes.splash) return null;
         if (!isOnAuthPage) return AppRoutes.login;
       }
       return null;
