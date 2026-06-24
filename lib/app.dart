@@ -44,7 +44,7 @@ class _AppState extends State<App> {
       ],
       child: Builder(
         builder: (context) {
-          final router = buildRouter(context);
+          final router = buildRouter(_authCubit);
           return MaterialApp.router(
             title: 'ALU Connect',
             theme: AppTheme.lightTheme,
