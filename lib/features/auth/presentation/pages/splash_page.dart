@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -40,6 +41,27 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   final _pageController = PageController();
   int _currentPage = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (_currentPage < _slides.length - 1) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _timer?.cancel();
+        _goToLogin();
+      }
+    });
+  }
 
   void _goToLogin() {
     if (!mounted) return;
@@ -59,6 +81,7 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
