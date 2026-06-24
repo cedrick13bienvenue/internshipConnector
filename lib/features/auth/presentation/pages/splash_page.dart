@@ -95,11 +95,16 @@ class _SplashPageState extends State<SplashPage> {
       child: Scaffold(
         body: Stack(
           children: [
-            PageView.builder(
-              controller: _pageController,
-              onPageChanged: (i) => setState(() => _currentPage = i),
-              itemCount: _slides.length,
-              itemBuilder: (_, i) => _SlideView(slide: _slides[i]),
+            Listener(
+              onPointerDown: (_) => _timer?.cancel(),
+              onPointerUp: (_) => _startTimer(),
+              onPointerCancel: (_) => _startTimer(),
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (i) => setState(() => _currentPage = i),
+                itemCount: _slides.length,
+                itemBuilder: (_, i) => _SlideView(slide: _slides[i]),
+              ),
             ),
             Positioned(
               top: 52,
