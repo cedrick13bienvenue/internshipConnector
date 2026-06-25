@@ -36,6 +36,7 @@ class AuthRepository {
       email: email,
       password: password,
     );
+    await cred.user!.sendEmailVerification();
     final user = UserModel(
       uid: cred.user!.uid,
       email: email,
@@ -50,11 +51,54 @@ class AuthRepository {
 
   Future<void> signOut() => _auth.signOut();
 
-  Future<UserModel> completeOnboarding(String uid) async {
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordResetEmail(email: email);
+
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    }
+  }
+
+  Future<UserModel> completeStudentOnboarding({
+    required String uid,
+    required String bio,
+    required List<String> skills,
+    String? program,
+  }) async {
+    await _db.collection('users').doc(uid).update({
+      'isOnboarded': true,
+      'bio': bio,
+      'skills': skills,
+      'program': program,
+    });
+    return _fetchUser(uid);
+  }
+
+  Future<UserModel> completeStartupOnboarding({
+    required String uid,
+    required String startupName,
+    required String description,
+    required List<String> categories,
+    String? websiteUrl,
+  }) async {
+    await _db.collection('startups').add({
+      'ownerId': uid,
+      'name': startupName,
+      'description': description,
+      'categories': categories,
+      'websiteUrl': websiteUrl,
+      'verificationStatus': 'pending',
+      'createdAt': Timestamp.now(),
+      'activeOpportunities': 0,
+    });
     await _db.collection('users').doc(uid).update({'isOnboarded': true});
     return _fetchUser(uid);
   }
 
-  Future<void> sendPasswordReset(String email) =>
-      _auth.sendPasswordResetEmail(email: email);
+  Future<UserModel> completeOnboarding(String uid) async {
+    await _db.collection('users').doc(uid).update({'isOnboarded': true});
+    return _fetchUser(uid);
+  }
 }
