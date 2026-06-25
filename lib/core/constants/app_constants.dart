@@ -25,6 +25,24 @@ class AppConstants {
     'Hybrid',
   ];
 
+  static const List<String> skills = [
+    'Flutter', 'Dart', 'Python', 'JavaScript', 'TypeScript',
+    'React', 'Node.js', 'SQL', 'Firebase', 'REST APIs',
+    'UI/UX Design', 'Figma', 'Graphic Design', 'Video Editing',
+    'Data Analysis', 'Machine Learning', 'Research',
+    'Marketing', 'Content Writing', 'Social Media',
+    'Business Development', 'Operations', 'Finance',
+    'Community Management', 'Project Management',
+  ];
+
+  static const List<String> programs = [
+    'Software Engineering',
+    'Entrepreneurial Leadership',
+    'Business Management',
+    'Data Science',
+    'Other',
+  ];
+
   static const int maxApplicationsPerUser = 10;
   static const int maxOpportunitiesPerStartup = 20;
   static const int searchDebounceMs = 400;
