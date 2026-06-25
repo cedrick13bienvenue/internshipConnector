@@ -145,7 +145,7 @@ class _LoginPageState extends State<LoginPage> {
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
-        onPressed: () {},
+        onPressed: () => context.go(AppRoutes.forgotPassword),
         child: const Text(AppStrings.forgotPassword),
       ),
     );
