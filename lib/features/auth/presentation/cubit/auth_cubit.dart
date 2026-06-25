@@ -26,7 +26,7 @@ class AuthCubit extends Cubit<AuthState> {
       final user = await _repository.signIn(email, password);
       emit(AuthAuthenticated(user));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError(_formatError(e)));
     }
   }
 
@@ -46,7 +46,7 @@ class AuthCubit extends Cubit<AuthState> {
       );
       emit(AuthAuthenticated(user));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError(_formatError(e)));
     }
   }
 
@@ -55,11 +55,76 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthUnauthenticated());
   }
 
-  Future<void> completeOnboarding() async {
+  Future<void> sendPasswordReset(String email) async {
+    emit(AuthLoading());
+    try {
+      await _repository.sendPasswordReset(email);
+      emit(AuthPasswordResetSent());
+    } catch (e) {
+      emit(AuthError(_formatError(e)));
+    }
+  }
+
+  Future<void> resendVerificationEmail() async {
+    try {
+      await _repository.sendEmailVerification();
+    } catch (_) {}
+  }
+
+  Future<void> completeStudentOnboarding({
+    required String bio,
+    required List<String> skills,
+    String? program,
+  }) async {
     final current = state;
     if (current is! AuthAuthenticated) return;
-    final updated = await _repository.completeOnboarding(current.user.uid);
-    emit(AuthAuthenticated(updated));
+    emit(AuthLoading());
+    try {
+      final updated = await _repository.completeStudentOnboarding(
+        uid: current.user.uid,
+        bio: bio,
+        skills: skills,
+        program: program,
+      );
+      emit(AuthAuthenticated(updated));
+    } catch (e) {
+      emit(AuthError(_formatError(e)));
+    }
+  }
+
+  Future<void> completeStartupOnboarding({
+    required String startupName,
+    required String description,
+    required List<String> categories,
+    String? websiteUrl,
+  }) async {
+    final current = state;
+    if (current is! AuthAuthenticated) return;
+    emit(AuthLoading());
+    try {
+      final updated = await _repository.completeStartupOnboarding(
+        uid: current.user.uid,
+        startupName: startupName,
+        description: description,
+        categories: categories,
+        websiteUrl: websiteUrl,
+      );
+      emit(AuthAuthenticated(updated));
+    } catch (e) {
+      emit(AuthError(_formatError(e)));
+    }
+  }
+
+  String _formatError(dynamic e) {
+    final msg = e.toString();
+    if (msg.contains('user-not-found')) return 'No account found with this email.';
+    if (msg.contains('wrong-password')) return 'Incorrect password.';
+    if (msg.contains('email-already-in-use')) return 'An account already exists with this email.';
+    if (msg.contains('weak-password')) return 'Password is too weak.';
+    if (msg.contains('invalid-email')) return 'Invalid email address.';
+    if (msg.contains('too-many-requests')) return 'Too many attempts. Please try again later.';
+    if (msg.contains('network-request-failed')) return 'No internet connection.';
+    return 'Something went wrong. Please try again.';
   }
 
   @override
