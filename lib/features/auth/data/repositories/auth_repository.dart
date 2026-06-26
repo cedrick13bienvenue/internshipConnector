@@ -23,7 +23,10 @@ class AuthRepository {
     if (!doc.exists || doc.data() == null) {
       throw Exception('User profile not found.');
     }
-    return UserModel.fromFirestore(doc);
+    final user = UserModel.fromFirestore(doc);
+    return user.copyWith(
+      isEmailVerified: _auth.currentUser?.emailVerified ?? false,
+    );
   }
 
   Future<UserModel> signIn(String email, String password) async {
@@ -67,6 +70,13 @@ class AuthRepository {
     if (user != null && !user.emailVerified) {
       await user.sendEmailVerification();
     }
+  }
+
+  Future<bool> checkEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    await user.reload();
+    return _auth.currentUser?.emailVerified ?? false;
   }
 
   Future<UserModel> completeStudentOnboarding({
