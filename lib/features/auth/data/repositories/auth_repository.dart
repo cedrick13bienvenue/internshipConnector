@@ -9,7 +9,12 @@ class AuthRepository {
   Stream<UserModel?> get authStateChanges => _auth.authStateChanges().asyncMap(
     (user) async {
       if (user == null) return null;
-      return _fetchUser(user.uid);
+      try {
+        return await _fetchUser(user.uid);
+      } catch (_) {
+        await _auth.signOut();
+        return null;
+      }
     },
   );
 
