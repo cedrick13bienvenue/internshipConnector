@@ -71,6 +71,17 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (_) {}
   }
 
+  Future<void> checkEmailVerification() async {
+    final current = state;
+    if (current is! AuthAuthenticated) return;
+    try {
+      final isVerified = await _repository.checkEmailVerification();
+      if (isVerified) {
+        emit(AuthAuthenticated(current.user.copyWith(isEmailVerified: true)));
+      }
+    } catch (_) {}
+  }
+
   Future<void> completeStudentOnboarding({
     required String bio,
     required List<String> skills,
