@@ -76,6 +76,7 @@ class AuthRepository {
     final user = _auth.currentUser;
     if (user == null) return false;
     await user.reload();
+    await _auth.currentUser?.getIdToken(true);
     return _auth.currentUser?.emailVerified ?? false;
   }
 
