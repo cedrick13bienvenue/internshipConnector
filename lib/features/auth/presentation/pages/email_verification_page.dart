@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/router/app_router.dart';
 import '../cubit/auth_cubit.dart';
 
 class EmailVerificationPage extends StatefulWidget {
@@ -64,7 +66,15 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated && state.user.isEmailVerified) {
+          context.go(
+            state.user.isOnboarded ? AppRoutes.home : AppRoutes.onboarding,
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
@@ -84,7 +94,8 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildIllustration() {
