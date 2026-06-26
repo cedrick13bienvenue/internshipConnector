@@ -20,6 +20,9 @@ class AuthRepository {
 
   Future<UserModel> _fetchUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
+    if (!doc.exists || doc.data() == null) {
+      throw Exception('User profile not found.');
+    }
     return UserModel.fromFirestore(doc);
   }
 
