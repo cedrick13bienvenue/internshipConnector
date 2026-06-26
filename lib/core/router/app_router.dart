@@ -6,6 +6,7 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/email_verification_page.dart';
 import '../../features/auth/presentation/pages/onboarding_page.dart';
 import '../../features/home/presentation/pages/main_shell_page.dart';
 import '../../features/opportunities/presentation/pages/opportunity_detail_page.dart';
@@ -19,6 +20,7 @@ class AppRoutes {
   static const login = '/login';
   static const signup = '/signup';
   static const forgotPassword = '/forgot-password';
+  static const verifyEmail = '/verify-email';
   static const onboarding = '/onboarding';
   static const home = '/home';
   static const opportunityDetail = '/opportunity/:id';
@@ -70,6 +72,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginPage()),
       GoRoute(path: AppRoutes.signup, builder: (_, __) => const SignupPage()),
       GoRoute(path: AppRoutes.forgotPassword, builder: (_, __) => const ForgotPasswordPage()),
+      GoRoute(path: AppRoutes.verifyEmail, builder: (_, __) => const EmailVerificationPage()),
       GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingPage()),
       GoRoute(
         path: AppRoutes.home,
