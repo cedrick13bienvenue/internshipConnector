@@ -21,6 +21,15 @@ class OpportunityCubit extends Cubit<OpportunityState> {
     );
   }
 
+  void watchMine(String startupId) {
+    emit(OpportunityLoading());
+    _sub?.cancel();
+    _sub = _repository.watchByStartup(startupId).listen(
+      (list) => emit(OpportunityLoaded(list)),
+      onError: (e) => emit(OpportunityError(e.toString())),
+    );
+  }
+
   void watchByCategory(String category) {
     emit(OpportunityLoading());
     _sub?.cancel();
