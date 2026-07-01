@@ -7,10 +7,12 @@ class OpportunityRepository {
   CollectionReference get _col => _db.collection('opportunities');
 
   Stream<List<OpportunityModel>> watchAll() => _col
-      .where('status', isEqualTo: 'open')
       .orderBy('postedAt', descending: true)
       .snapshots()
-      .map((s) => s.docs.map(OpportunityModel.fromFirestore).toList());
+      .map((s) => s.docs
+          .map(OpportunityModel.fromFirestore)
+          .where((o) => o.status == OpportunityStatus.open)
+          .toList());
 
   Stream<List<OpportunityModel>> watchByCategory(String category) => _col
       .where('status', isEqualTo: 'open')
