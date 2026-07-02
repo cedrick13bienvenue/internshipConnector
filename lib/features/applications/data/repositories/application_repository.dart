@@ -8,23 +8,25 @@ class ApplicationRepository {
 
   Stream<List<ApplicationModel>> watchByApplicant(String uid) => _col
       .where('applicantId', isEqualTo: uid)
-      .orderBy('appliedAt', descending: true)
       .snapshots()
-      .map((s) => s.docs.map(ApplicationModel.fromFirestore).toList());
+      .map((s) => s.docs
+          .map(ApplicationModel.fromFirestore)
+          .toList()
+        ..sort((a, b) => b.appliedAt.compareTo(a.appliedAt)));
 
   Stream<List<ApplicationModel>> watchByOpportunity(String opportunityId) => _col
       .where('opportunityId', isEqualTo: opportunityId)
-      .orderBy('appliedAt', descending: true)
       .snapshots()
-      .map((s) => s.docs.map(ApplicationModel.fromFirestore).toList());
+      .map((s) => s.docs
+          .map(ApplicationModel.fromFirestore)
+          .toList()
+        ..sort((a, b) => b.appliedAt.compareTo(a.appliedAt)));
 
   Future<bool> hasApplied(String uid, String opportunityId) async {
-    final snap = await _col
-        .where('applicantId', isEqualTo: uid)
-        .where('opportunityId', isEqualTo: opportunityId)
-        .limit(1)
-        .get();
-    return snap.docs.isNotEmpty;
+    final snap = await _col.where('applicantId', isEqualTo: uid).get();
+    return snap.docs.any(
+      (d) => (d.data() as Map<String, dynamic>)['opportunityId'] == opportunityId,
+    );
   }
 
   Future<ApplicationModel> submit(ApplicationModel application) async {
