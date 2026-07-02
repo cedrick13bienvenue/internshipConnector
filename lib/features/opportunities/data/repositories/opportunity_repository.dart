@@ -15,17 +15,30 @@ class OpportunityRepository {
           .toList());
 
   Stream<List<OpportunityModel>> watchByCategory(String category) => _col
-      .where('status', isEqualTo: 'open')
       .where('category', isEqualTo: category)
-      .orderBy('postedAt', descending: true)
       .snapshots()
-      .map((s) => s.docs.map(OpportunityModel.fromFirestore).toList());
+      .map((s) => s.docs
+          .map(OpportunityModel.fromFirestore)
+          .where((o) => o.status == OpportunityStatus.open)
+          .toList()
+        ..sort((a, b) => b.postedAt.compareTo(a.postedAt)));
 
   Stream<List<OpportunityModel>> watchByStartup(String startupId) => _col
       .where('startupId', isEqualTo: startupId)
-      .orderBy('postedAt', descending: true)
       .snapshots()
-      .map((s) => s.docs.map(OpportunityModel.fromFirestore).toList());
+      .map((s) => s.docs
+          .map(OpportunityModel.fromFirestore)
+          .toList()
+        ..sort((a, b) => b.postedAt.compareTo(a.postedAt)));
+
+  Future<List<OpportunityModel>> getByStartup(String startupId) async {
+    final snap = await _col.where('startupId', isEqualTo: startupId).get();
+    return snap.docs
+        .map(OpportunityModel.fromFirestore)
+        .where((o) => o.status == OpportunityStatus.open)
+        .toList()
+      ..sort((a, b) => b.postedAt.compareTo(a.postedAt));
+  }
 
   Future<OpportunityModel> getById(String id) async {
     final doc = await _col.doc(id).get();
