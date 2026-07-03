@@ -318,10 +318,32 @@ class _StartupHome extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                     sliver: SliverList.builder(
                       itemCount: oppState.opportunities.length,
-                      itemBuilder: (context, i) => OpportunityCard(
-                        opportunity: oppState.opportunities[i],
-                        onTap: () => context.push('/home/opportunity/${oppState.opportunities[i].id}'),
-                      ),
+                      itemBuilder: (context, i) {
+                        final opp = oppState.opportunities[i];
+                        return OpportunityCard(
+                          opportunity: opp,
+                          onTap: () => context.push('/home/opportunity/${opp.id}'),
+                          trailing: PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert_rounded,
+                                size: 20, color: AppColors.textHint),
+                            onSelected: (v) {
+                              if (v == 'edit') {
+                                context.push('/home/edit-opportunity/${opp.id}', extra: opp);
+                              }
+                            },
+                            itemBuilder: (_) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: ListTile(
+                                  leading: Icon(Icons.edit_rounded),
+                                  title: Text('Edit'),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
