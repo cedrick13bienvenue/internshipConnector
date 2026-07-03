@@ -11,6 +11,24 @@ class StartupRepository {
       .snapshots()
       .map((s) => s.docs.map(StartupModel.fromFirestore).toList());
 
+  Stream<List<StartupModel>> watchPending() => _col
+      .where('verificationStatus', isEqualTo: StartupVerificationStatus.pending.name)
+      .snapshots()
+      .map((s) => s.docs
+          .map(StartupModel.fromFirestore)
+          .toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+
+  Stream<List<StartupModel>> watchAll() => _col
+      .snapshots()
+      .map((s) => s.docs
+          .map(StartupModel.fromFirestore)
+          .toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+
+  Future<void> updateVerification(String id, StartupVerificationStatus status) =>
+      _col.doc(id).update({'verificationStatus': status.name});
+
   Future<StartupModel?> getByOwner(String uid) async {
     final snap = await _col.where('ownerId', isEqualTo: uid).limit(1).get();
     if (snap.docs.isEmpty) return null;
