@@ -126,6 +126,29 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> updateStudentProfile({
+    required String fullName,
+    String? bio,
+    List<String>? skills,
+    String? program,
+  }) async {
+    final current = state;
+    if (current is! AuthAuthenticated) return;
+    try {
+      final updated = await _repository.updateStudentProfile(
+        uid: current.user.uid,
+        fullName: fullName,
+        bio: bio,
+        skills: skills,
+        program: program,
+      );
+      emit(AuthAuthenticated(updated));
+    } catch (e) {
+      emit(AuthError(_formatError(e)));
+      emit(current);
+    }
+  }
+
   String _formatError(dynamic e) {
     final msg = e.toString();
     if (msg.contains('user-not-found')) return 'No account found with this email.';

@@ -116,6 +116,22 @@ class AuthRepository {
     return _fetchUser(uid);
   }
 
+  Future<UserModel> updateStudentProfile({
+    required String uid,
+    required String fullName,
+    String? bio,
+    List<String>? skills,
+    String? program,
+  }) async {
+    await _db.collection('users').doc(uid).update({
+      'fullName': fullName,
+      'bio': bio,
+      'skills': skills ?? [],
+      'program': program,
+    });
+    return _fetchUser(uid);
+  }
+
   Future<UserModel> completeOnboarding(String uid) async {
     await _db.collection('users').doc(uid).update({'isOnboarded': true});
     return _fetchUser(uid);
