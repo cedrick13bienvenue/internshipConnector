@@ -62,12 +62,13 @@ GoRouter buildRouter(AuthCubit authCubit) {
       if (authState is AuthInitial) return null;
 
       if (authState is AuthAuthenticated) {
-        if (!authState.user.isEmailVerified) {
+        final isAdmin = authState.user.role == UserRole.admin;
+        if (!isAdmin && !authState.user.isEmailVerified) {
           if (loc == AppRoutes.verifyEmail) return null;
           return AppRoutes.verifyEmail;
         }
-        if (!authState.user.isOnboarded) return AppRoutes.onboarding;
-        if (authState.user.role == UserRole.admin) {
+        if (!isAdmin && !authState.user.isOnboarded) return AppRoutes.onboarding;
+        if (isAdmin) {
           if (loc.startsWith(AppRoutes.admin)) return null;
           return AppRoutes.admin;
         }
