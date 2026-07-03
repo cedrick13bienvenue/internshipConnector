@@ -377,15 +377,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final isLastStep = _currentStep == 1;
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-      child: ElevatedButton(
-        onPressed: isLoading ? null : _next,
-        child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-              )
-            : Text(isLastStep ? 'Get Started 🚀' : 'Continue'),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ElevatedButton(
+            onPressed: isLoading ? null : _next,
+            child: isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : Text(isLastStep ? 'Get Started 🚀' : 'Continue'),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => context.read<AuthCubit>().signOut(),
+            child: const Text(
+              'Sign out',
+              style: TextStyle(color: AppColors.textHint, fontSize: 13),
+            ),
+          ),
+        ],
       ),
     );
   }
