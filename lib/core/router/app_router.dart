@@ -14,6 +14,8 @@ import '../../features/opportunities/presentation/pages/post_opportunity_page.da
 import '../../features/applications/presentation/pages/application_form_page.dart';
 import '../../features/startups/presentation/pages/startup_profile_page.dart';
 import '../../features/startups/presentation/pages/startup_registration_page.dart';
+import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
+import '../../features/auth/data/models/user_model.dart';
 
 class AppRoutes {
   static const splash = '/';
@@ -23,6 +25,7 @@ class AppRoutes {
   static const verifyEmail = '/verify-email';
   static const onboarding = '/onboarding';
   static const home = '/home';
+  static const admin = '/admin';
   static const opportunityDetail = '/opportunity/:id';
   static const postOpportunity = '/post-opportunity';
   static const applicationForm = '/apply/:opportunityId';
@@ -64,6 +67,10 @@ GoRouter buildRouter(AuthCubit authCubit) {
           return AppRoutes.verifyEmail;
         }
         if (!authState.user.isOnboarded) return AppRoutes.onboarding;
+        if (authState.user.role == UserRole.admin) {
+          if (loc.startsWith(AppRoutes.admin)) return null;
+          return AppRoutes.admin;
+        }
         if (isOnAuthPage || loc == AppRoutes.splash) return AppRoutes.home;
       } else if (authState is AuthUnauthenticated) {
         if (loc == AppRoutes.splash) return null;
@@ -78,6 +85,7 @@ GoRouter buildRouter(AuthCubit authCubit) {
       GoRoute(path: AppRoutes.forgotPassword, builder: (_, __) => const ForgotPasswordPage()),
       GoRoute(path: AppRoutes.verifyEmail, builder: (_, __) => const EmailVerificationPage()),
       GoRoute(path: AppRoutes.onboarding, builder: (_, __) => const OnboardingPage()),
+      GoRoute(path: AppRoutes.admin, builder: (_, __) => const AdminDashboardPage()),
       GoRoute(
         path: AppRoutes.home,
         builder: (_, __) => const MainShellPage(),
