@@ -14,6 +14,14 @@ class ApplicationRepository {
           .toList()
         ..sort((a, b) => b.appliedAt.compareTo(a.appliedAt)));
 
+  Stream<List<ApplicationModel>> watchByStartup(String startupId) => _col
+      .where('startupId', isEqualTo: startupId)
+      .snapshots()
+      .map((s) => s.docs
+          .map(ApplicationModel.fromFirestore)
+          .toList()
+        ..sort((a, b) => b.appliedAt.compareTo(a.appliedAt)));
+
   Stream<List<ApplicationModel>> watchByOpportunity(String opportunityId) => _col
       .where('opportunityId', isEqualTo: opportunityId)
       .snapshots()
