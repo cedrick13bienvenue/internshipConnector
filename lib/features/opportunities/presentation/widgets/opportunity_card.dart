@@ -5,8 +5,14 @@ import '../../data/models/opportunity_model.dart';
 class OpportunityCard extends StatelessWidget {
   final OpportunityModel opportunity;
   final VoidCallback onTap;
+  final Widget? trailing;
 
-  const OpportunityCard({super.key, required this.opportunity, required this.onTap});
+  const OpportunityCard({
+    super.key,
+    required this.opportunity,
+    required this.onTap,
+    this.trailing,
+  });
 
   String get _postedAgo {
     final diff = DateTime.now().difference(opportunity.postedAt);
@@ -69,6 +75,7 @@ class OpportunityCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (trailing != null) trailing!,
                 ],
               ),
               const SizedBox(height: 14),
