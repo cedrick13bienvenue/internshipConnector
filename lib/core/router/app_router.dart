@@ -14,8 +14,12 @@ import '../../features/opportunities/presentation/pages/post_opportunity_page.da
 import '../../features/applications/presentation/pages/application_form_page.dart';
 import '../../features/startups/presentation/pages/startup_profile_page.dart';
 import '../../features/startups/presentation/pages/startup_registration_page.dart';
+import '../../features/startups/presentation/pages/edit_startup_page.dart';
 import '../../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../../features/auth/data/models/user_model.dart';
+import '../../features/profile/presentation/pages/edit_student_profile_page.dart';
+import '../../features/opportunities/presentation/pages/edit_opportunity_page.dart';
+import '../../features/opportunities/data/models/opportunity_model.dart';
 
 class AppRoutes {
   static const splash = '/';
@@ -107,6 +111,14 @@ GoRouter buildRouter(AuthCubit authCubit) {
           ),
           GoRoute(path: 'post-opportunity', builder: (_, __) => const PostOpportunityPage()),
           GoRoute(path: 'startup/register', builder: (_, __) => const StartupRegistrationPage()),
+          GoRoute(path: 'edit-profile', builder: (_, __) => const EditStudentProfilePage()),
+          GoRoute(path: 'edit-startup', builder: (_, __) => const EditStartupPage()),
+          GoRoute(
+            path: 'edit-opportunity/:id',
+            builder: (_, state) => EditOpportunityPage(
+              opportunity: state.extra as OpportunityModel,
+            ),
+          ),
         ],
       ),
     ],
