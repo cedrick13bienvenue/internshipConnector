@@ -95,9 +95,16 @@ String _statusLabel(ApplicationStatus s) => switch (s) {
       ApplicationStatus.closed => 'Closed',
     };
 
-class _ApplicantCard extends StatelessWidget {
+class _ApplicantCard extends StatefulWidget {
   final ApplicationModel application;
   const _ApplicantCard({required this.application});
+
+  @override
+  State<_ApplicantCard> createState() => _ApplicantCardState();
+}
+
+class _ApplicantCardState extends State<_ApplicantCard> {
+  bool _updating = false;
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
@@ -106,9 +113,65 @@ class _ApplicantCard extends StatelessWidget {
     return '${diff.inMinutes}m ago';
   }
 
+  Future<void> _updateStatus(ApplicationStatus newStatus) async {
+    setState(() => _updating = true);
+    try {
+      await ApplicationRepository().updateStatus(widget.application.id, newStatus);
+    } finally {
+      if (mounted) setState(() => _updating = false);
+    }
+  }
+
+  void _showStatusSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: Text(
+              'Update Status',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+          ),
+          ...ApplicationStatus.values
+              .where((s) => s != ApplicationStatus.closed)
+              .map(
+                (s) => RadioListTile<ApplicationStatus>(
+                  title: Text(_statusLabel(s)),
+                  value: s,
+                  groupValue: widget.application.status,
+                  activeColor: _statusColor(s),
+                  onChanged: (v) async {
+                    Navigator.pop(ctx);
+                    if (v != null && v != widget.application.status) {
+                      await _updateStatus(v);
+                    }
+                  },
+                ),
+              ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(application.status);
+    final color = _statusColor(widget.application.status);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -121,8 +184,8 @@ class _ApplicantCard extends StatelessWidget {
                   radius: 20,
                   backgroundColor: AppColors.primaryLight,
                   child: Text(
-                    application.applicantName.isNotEmpty
-                        ? application.applicantName[0].toUpperCase()
+                    widget.application.applicantName.isNotEmpty
+                        ? widget.application.applicantName[0].toUpperCase()
                         : '?',
                     style: const TextStyle(
                       color: AppColors.primary,
@@ -136,11 +199,11 @@ class _ApplicantCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        application.applicantName,
+                        widget.application.applicantName,
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       Text(
-                        'for ${application.opportunityTitle}',
+                        'for ${widget.application.opportunityTitle}',
                         style: Theme.of(context).textTheme.bodySmall,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -149,15 +212,15 @@ class _ApplicantCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  _timeAgo(application.appliedAt),
+                  _timeAgo(widget.application.appliedAt),
                   style: const TextStyle(color: AppColors.textHint, fontSize: 11),
                 ),
               ],
             ),
-            if (application.coverNote.isNotEmpty) ...[
+            if (widget.application.coverNote.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
-                application.coverNote,
+                widget.application.coverNote,
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
@@ -167,20 +230,39 @@ class _ApplicantCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _statusLabel(application.status),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _statusLabel(widget.application.status),
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-              ),
+                const Spacer(),
+                _updating
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : TextButton(
+                        onPressed: _showStatusSheet,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size.zero,
+                        ),
+                        child: const Text('Update Status', style: TextStyle(fontSize: 12)),
+                      ),
+              ],
             ),
           ],
         ),
