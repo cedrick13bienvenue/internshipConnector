@@ -282,15 +282,22 @@ class _StartupHome extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            ElevatedButton(
-                              onPressed: () => context.push('/home/post-opportunity'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: AppColors.primary,
-                                minimumSize: const Size(0, 44),
-                                padding: const EdgeInsets.symmetric(horizontal: 18),
+                            Tooltip(
+                              message: startup.isVerified
+                                  ? ''
+                                  : 'Verification required to post',
+                              child: ElevatedButton(
+                                onPressed: startup.isVerified
+                                    ? () => context.push('/home/post-opportunity')
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: AppColors.primary,
+                                  minimumSize: const Size(0, 44),
+                                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                                ),
+                                child: const Text('Post New'),
                               ),
-                              child: const Text('Post New'),
                             ),
                           ],
                         ),
