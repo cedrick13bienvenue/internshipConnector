@@ -92,6 +92,38 @@ class _PostOpportunityPageState extends State<PostOpportunityPage> {
 
   @override
   Widget build(BuildContext context) {
+    final startupState = context.read<StartupCubit>().state;
+    final startup = startupState is StartupOwnerLoaded ? startupState.startup : null;
+
+    if (startup == null || !startup.isVerified) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Post Opportunity')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.verified_outlined, size: 56, color: AppColors.warning),
+                const SizedBox(height: 16),
+                Text(
+                  'Verification required',
+                  style: Theme.of(context).textTheme.titleLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Your startup must be verified by an ALU admin before you can post opportunities.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Post Opportunity')),
       body: Form(
