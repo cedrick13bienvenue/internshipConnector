@@ -28,6 +28,7 @@ class OpportunityRepository {
       .snapshots()
       .map((s) => s.docs
           .map(OpportunityModel.fromFirestore)
+          .where((o) => o.status != OpportunityStatus.closed)
           .toList()
         ..sort((a, b) => b.postedAt.compareTo(a.postedAt)));
 
