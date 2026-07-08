@@ -6,6 +6,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../opportunities/presentation/cubit/opportunity_cubit.dart';
+import '../../../opportunities/data/repositories/opportunity_repository.dart';
 import '../../../opportunities/presentation/widgets/opportunity_card.dart';
 import '../../../startups/presentation/cubit/startup_cubit.dart';
 
@@ -333,9 +334,33 @@ class _StartupHome extends StatelessWidget {
                           trailing: PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert_rounded,
                                 size: 20, color: AppColors.textHint),
-                            onSelected: (v) {
+                            onSelected: (v) async {
                               if (v == 'edit') {
                                 context.push('/home/edit-opportunity/${opp.id}', extra: opp);
+                              } else if (v == 'close') {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Close Opportunity'),
+                                    content: const Text(
+                                        'This stops new applications. Cannot be undone.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.error),
+                                        child: const Text('Close It'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  await OpportunityRepository().close(opp.id);
+                                }
                               }
                             },
                             itemBuilder: (_) => [
@@ -344,6 +369,15 @@ class _StartupHome extends StatelessWidget {
                                 child: ListTile(
                                   leading: Icon(Icons.edit_rounded),
                                   title: Text('Edit'),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'close',
+                                child: ListTile(
+                                  leading: Icon(Icons.close_rounded, color: AppColors.error),
+                                  title: Text('Close',
+                                      style: TextStyle(color: AppColors.error)),
                                   contentPadding: EdgeInsets.zero,
                                 ),
                               ),
