@@ -17,8 +17,8 @@ class MainShellPage extends StatefulWidget {
 
 class _MainShellPageState extends State<MainShellPage> {
   int _currentIndex = 0;
-  late final bool _isStartup;
-  late final List<Widget> _pages;
+  bool? _isStartup;
+  List<Widget>? _pages;
 
   void _goToExplore() => setState(() => _currentIndex = 1);
 
