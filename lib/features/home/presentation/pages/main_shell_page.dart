@@ -22,13 +22,11 @@ class _MainShellPageState extends State<MainShellPage> {
 
   void _goToExplore() => setState(() => _currentIndex = 1);
 
-  @override
-  void initState() {
-    super.initState();
-    final auth = context.read<AuthCubit>().state;
-    _isStartup = auth is AuthAuthenticated && auth.user.role == UserRole.startup;
-
-    _pages = _isStartup
+  void _initPages(UserRole role) {
+    final isStartup = role == UserRole.startup;
+    if (_isStartup == isStartup) return;
+    _isStartup = isStartup;
+    _pages = isStartup
         ? [
             HomeTabPage(onExploreTap: _goToExplore),
             const StartupApplicantsTabPage(),
@@ -40,6 +38,15 @@ class _MainShellPageState extends State<MainShellPage> {
             const ApplicationsTabPage(),
             const ProfileTabPage(),
           ];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final auth = context.read<AuthCubit>().state;
+    if (auth is AuthAuthenticated) {
+      _initPages(auth.user.role);
+    }
   }
 
   @override
