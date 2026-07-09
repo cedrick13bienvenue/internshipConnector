@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 
@@ -129,6 +131,20 @@ class AuthRepository {
       'skills': skills ?? [],
       'program': program,
     });
+    return _fetchUser(uid);
+  }
+
+  Future<String> uploadProfilePhoto(String uid, List<int> bytes, String mimeType) async {
+    final ref = FirebaseStorage.instance.ref('profile_photos/$uid');
+    await ref.putData(
+      Uint8List.fromList(bytes),
+      SettableMetadata(contentType: mimeType),
+    );
+    return ref.getDownloadURL();
+  }
+
+  Future<UserModel> updateProfilePhoto(String uid, String photoUrl) async {
+    await _db.collection('users').doc(uid).update({'photoUrl': photoUrl});
     return _fetchUser(uid);
   }
 
