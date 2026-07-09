@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_toast.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../startups/presentation/cubit/startup_cubit.dart';
 import '../../data/models/opportunity_model.dart';
@@ -71,13 +72,14 @@ class _PostOpportunityPageState extends State<PostOpportunityPage> {
 
     try {
       await OpportunityRepository().create(opportunity);
-      if (mounted) context.pop();
+      if (mounted) {
+        AppToast.showSuccess(context, 'Opportunity posted successfully!');
+        context.pop();
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to post: $e'), backgroundColor: AppColors.error),
-        );
+        AppToast.showError(context, 'Failed to post: $e');
       }
     }
   }
