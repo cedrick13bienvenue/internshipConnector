@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_toast.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../startups/data/models/startup_model.dart';
 import '../../../startups/data/repositories/startup_repository.dart';
@@ -156,11 +157,14 @@ class _StartupAdminCard extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed == true) {
+    if (confirmed == true && context.mounted) {
       await StartupRepository().updateVerification(
         startup.id,
         StartupVerificationStatus.verified,
       );
+      if (context.mounted) {
+        AppToast.showSuccess(context, '${startup.name} has been verified.');
+      }
     }
   }
 
@@ -183,11 +187,14 @@ class _StartupAdminCard extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed == true) {
+    if (confirmed == true && context.mounted) {
       await StartupRepository().updateVerification(
         startup.id,
         StartupVerificationStatus.rejected,
       );
+      if (context.mounted) {
+        AppToast.showError(context, '${startup.name} has been rejected.');
+      }
     }
   }
 
