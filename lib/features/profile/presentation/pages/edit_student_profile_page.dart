@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_toast.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 
@@ -54,12 +55,11 @@ class _EditStudentProfilePageState extends State<EditStudentProfilePage> {
         if (!_saving) return;
         if (state is AuthAuthenticated) {
           setState(() => _saving = false);
+          AppToast.showSuccess(context, 'Profile updated successfully!');
           context.pop();
         } else if (state is AuthError) {
           setState(() => _saving = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
-          );
+          AppToast.showError(context, state.message);
         }
       },
       child: Scaffold(
