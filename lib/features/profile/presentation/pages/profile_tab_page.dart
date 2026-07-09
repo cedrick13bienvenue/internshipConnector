@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
@@ -39,18 +40,33 @@ class ProfileTabPage extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 44,
                   backgroundColor: AppColors.primaryLight,
-                  backgroundImage:
-                      user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
-                  child: user.photoUrl == null
-                      ? Text(
+                  child: user.photoUrl != null
+                      ? ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: user.photoUrl!,
+                            width: 88,
+                            height: 88,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Text(
+                              user.fullName.isNotEmpty
+                                  ? user.fullName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Text(
                           user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
                           style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
                           ),
-                        )
-                      : null,
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
