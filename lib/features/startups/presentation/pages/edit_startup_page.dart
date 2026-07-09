@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/app_toast.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/repositories/startup_repository.dart';
@@ -56,13 +57,14 @@ class _EditStartupPageState extends State<EditStartupPage> {
       if (!mounted) return;
       final uid = (context.read<AuthCubit>().state as AuthAuthenticated).user.uid;
       await context.read<StartupCubit>().loadMyStartup(uid);
-      if (mounted) context.pop();
+      if (mounted) {
+        AppToast.showSuccess(context, 'Startup profile updated!');
+        context.pop();
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
-        );
+        AppToast.showError(context, e.toString());
       }
     }
   }
