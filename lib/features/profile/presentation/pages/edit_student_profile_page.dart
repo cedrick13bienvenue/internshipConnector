@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/app_toast.dart';
+import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 
 class EditStudentProfilePage extends StatefulWidget {
@@ -22,6 +24,7 @@ class _EditStudentProfilePageState extends State<EditStudentProfilePage> {
   final Set<String> _selectedSkills = {};
   bool _saving = false;
   bool _uploadingPhoto = false;
+  Uint8List? _previewBytes;
 
   @override
   void initState() {
@@ -53,9 +56,9 @@ class _EditStudentProfilePageState extends State<EditStudentProfilePage> {
     setState(() => _uploadingPhoto = true);
     try {
       final bytes = await picked.readAsBytes();
-      final mimeType = picked.mimeType ?? 'image/jpeg';
       if (!mounted) return;
-      await context.read<AuthCubit>().uploadProfilePhoto(bytes, mimeType);
+      setState(() => _previewBytes = bytes);
+      await context.read<AuthCubit>().uploadProfilePhoto(bytes);
       if (mounted) AppToast.showSuccess(context, 'Photo updated!');
     } catch (e) {
       if (mounted) AppToast.showError(context, 'Failed to upload photo.');
@@ -97,6 +100,7 @@ class _EditStudentProfilePageState extends State<EditStudentProfilePage> {
             _AvatarPicker(
               onTap: _uploadingPhoto ? null : _pickPhoto,
               uploading: _uploadingPhoto,
+              previewBytes: _previewBytes,
             ),
             const SizedBox(height: 28),
             TextFormField(
@@ -169,7 +173,8 @@ class _EditStudentProfilePageState extends State<EditStudentProfilePage> {
 class _AvatarPicker extends StatelessWidget {
   final VoidCallback? onTap;
   final bool uploading;
-  const _AvatarPicker({required this.onTap, required this.uploading});
+  final Uint8List? previewBytes;
+  const _AvatarPicker({required this.onTap, required this.uploading, this.previewBytes});
 
   @override
   Widget build(BuildContext context) {
@@ -177,6 +182,7 @@ class _AvatarPicker extends StatelessWidget {
       builder: (context, state) {
         final photoUrl = state is AuthAuthenticated ? state.user.photoUrl : null;
         final name = state is AuthAuthenticated ? state.user.fullName : '';
+        final isStartup = state is AuthAuthenticated && state.user.role == UserRole.startup;
 
         return Center(
           child: GestureDetector(
@@ -190,19 +196,32 @@ class _AvatarPicker extends StatelessWidget {
                   child: uploading
                       ? const CircularProgressIndicator(
                           color: AppColors.primary, strokeWidth: 2)
-                      : photoUrl != null
+                      : previewBytes != null
                           ? ClipOval(
-                              child: CachedNetworkImage(
-                                imageUrl: photoUrl,
+                              child: Image.memory(
+                                previewBytes!,
                                 width: 104,
                                 height: 104,
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => const CircularProgressIndicator(
-                                  color: AppColors.primary, strokeWidth: 2),
-                                errorWidget: (_, __, ___) => _initials(name),
                               ),
                             )
-                          : _initials(name),
+                          : photoUrl != null
+                              ? ClipOval(
+                                  child: CachedNetworkImage(
+                                    imageUrl: photoUrl,
+                                    width: 104,
+                                    height: 104,
+                                    fit: BoxFit.cover,
+                                    placeholder: (_, __) => const CircularProgressIndicator(
+                                      color: AppColors.primary, strokeWidth: 2),
+                                    errorWidget: (_, __, ___) => isStartup
+                                        ? _businessIcon()
+                                        : _initials(name),
+                                  ),
+                                )
+                              : isStartup
+                                  ? _businessIcon()
+                                  : _initials(name),
                 ),
                 Container(
                   width: 32,
@@ -230,5 +249,11 @@ class _AvatarPicker extends StatelessWidget {
           fontSize: 36,
           fontWeight: FontWeight.w700,
         ),
+      );
+
+  Widget _businessIcon() => const Icon(
+        Icons.business_rounded,
+        color: AppColors.primary,
+        size: 40,
       );
 }
