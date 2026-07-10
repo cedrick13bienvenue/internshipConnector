@@ -126,13 +126,12 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<String> uploadProfilePhoto(List<int> bytes, String mimeType) async {
+  Future<String> uploadProfilePhoto(List<int> bytes) async {
     final current = state;
     if (current is! AuthAuthenticated) throw Exception('Not authenticated');
     final photoUrl = await _repository.uploadProfilePhoto(
       current.user.uid,
       bytes,
-      mimeType,
     );
     final updated = await _repository.updateProfilePhoto(current.user.uid, photoUrl);
     emit(AuthAuthenticated(updated));
