@@ -47,26 +47,24 @@ class ProfileTabPage extends StatelessWidget {
                             width: 88,
                             height: 88,
                             fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Text(
-                              user.fullName.isNotEmpty
-                                  ? user.fullName[0].toUpperCase()
-                                  : '?',
+                            errorWidget: (_, __, ___) => user.role == UserRole.startup
+                                ? const Icon(Icons.business_rounded, color: AppColors.primary, size: 40)
+                                : Text(
+                                    user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
+                                    style: const TextStyle(color: AppColors.primary, fontSize: 32, fontWeight: FontWeight.w700),
+                                  ),
+                          ),
+                        )
+                      : user.role == UserRole.startup
+                          ? const Icon(Icons.business_rounded, color: AppColors.primary, size: 40)
+                          : Text(
+                              user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ),
-                        )
-                      : Text(
-                          user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -135,16 +133,13 @@ class ProfileTabPage extends StatelessWidget {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            CircleAvatar(
+                            const CircleAvatar(
                               radius: 24,
                               backgroundColor: AppColors.primaryLight,
-                              child: Text(
-                                startup.name.isNotEmpty ? startup.name[0].toUpperCase() : '?',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
-                                ),
+                              child: Icon(
+                                Icons.business_rounded,
+                                color: AppColors.primary,
+                                size: 22,
                               ),
                             ),
                             const SizedBox(width: 12),
