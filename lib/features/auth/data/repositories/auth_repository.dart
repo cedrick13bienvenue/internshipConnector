@@ -1,7 +1,8 @@
-import 'dart:typed_data';
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 
 class AuthRepository {
@@ -134,13 +135,24 @@ class AuthRepository {
     return _fetchUser(uid);
   }
 
-  Future<String> uploadProfilePhoto(String uid, List<int> bytes, String mimeType) async {
-    final ref = FirebaseStorage.instance.ref('profile_photos/$uid');
-    await ref.putData(
-      Uint8List.fromList(bytes),
-      SettableMetadata(contentType: mimeType),
-    );
-    return ref.getDownloadURL();
+  Future<String> uploadProfilePhoto(String uid, List<int> bytes) async {
+    final cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME']!;
+    final preset = dotenv.env['CLOUDINARY_UPLOAD_PRESET']!;
+    final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+    final request = http.MultipartRequest('POST', uri)
+      ..fields['upload_preset'] = preset
+      ..fields['public_id'] = uid
+      ..files.add(http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: '$uid.jpg',
+      ));
+    final streamed = await request.send();
+    final body = jsonDecode(await streamed.stream.bytesToString());
+    if (streamed.statusCode != 200) {
+      throw Exception('Upload failed: ${body['error']?['message'] ?? 'Unknown error'}');
+    }
+    return body['secure_url'] as String;
   }
 
   Future<UserModel> updateProfilePhoto(String uid, String photoUrl) async {
