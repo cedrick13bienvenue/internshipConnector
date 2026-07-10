@@ -221,14 +221,9 @@ class _StartupAdminCard extends StatelessWidget {
                       ? NetworkImage(startup.logoUrl!)
                       : null,
                   child: startup.logoUrl == null
-                      ? Text(
-                          startup.name.isNotEmpty
-                              ? startup.name[0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      ? const Icon(
+                          Icons.business_rounded,
+                          color: AppColors.primary,
                         )
                       : null,
                 ),
