@@ -70,15 +70,10 @@ class _StartupProfileView extends StatelessWidget {
                               ? NetworkImage(startup.logoUrl!)
                               : null,
                           child: startup.logoUrl == null
-                              ? Text(
-                                  startup.name.isNotEmpty
-                                      ? startup.name[0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                              ? const Icon(
+                                  Icons.business_rounded,
+                                  color: Colors.white,
+                                  size: 28,
                                 )
                               : null,
                         ),
