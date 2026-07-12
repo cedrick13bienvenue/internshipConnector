@@ -24,13 +24,27 @@ class _PostOpportunityPageState extends State<PostOpportunityPage> {
   String _commitment = AppConstants.commitmentTypes.first;
   String _location = AppConstants.locationTypes.first;
   final Set<String> _selectedSkills = {};
+  final TextEditingController _customSkillController = TextEditingController();
   DateTime? _deadline;
   bool _isSubmitting = false;
+
+  Set<String> get _customSkills =>
+      _selectedSkills.where((s) => !AppConstants.skills.contains(s)).toSet();
+
+  void _addCustomSkill() {
+    final skill = _customSkillController.text.trim();
+    if (skill.isEmpty || _selectedSkills.contains(skill)) return;
+    setState(() {
+      _selectedSkills.add(skill);
+      _customSkillController.clear();
+    });
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descController.dispose();
+    _customSkillController.dispose();
     super.dispose();
   }
 
@@ -211,6 +225,52 @@ class _PostOpportunityPageState extends State<PostOpportunityPage> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customSkillController,
+                    decoration: InputDecoration(
+                      hintText: 'Add other skill...',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.divider),
+                      ),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    onSubmitted: (_) => _addCustomSkill(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: _addCustomSkill,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Icon(Icons.add_rounded),
+                ),
+              ],
+            ),
+            if (_customSkills.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _customSkills.map((s) => Chip(
+                  label: Text(s, style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+                  deleteIcon: const Icon(Icons.close_rounded, size: 14, color: AppColors.primary),
+                  onDeleted: () => setState(() => _selectedSkills.remove(s)),
+                  backgroundColor: AppColors.primaryLight,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                )).toList(),
+              ),
+            ],
             const SizedBox(height: 28),
             Row(
               children: [
