@@ -210,15 +210,7 @@ class _ApplicationCard extends StatelessWidget {
                   ? NetworkImage(application.startupLogoUrl!)
                   : null,
               child: application.startupLogoUrl == null
-                  ? Text(
-                      application.startupName.isNotEmpty
-                          ? application.startupName[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    )
+                  ? const Icon(Icons.business_rounded, color: AppColors.primary, size: 20)
                   : null,
             ),
             const SizedBox(width: 12),
