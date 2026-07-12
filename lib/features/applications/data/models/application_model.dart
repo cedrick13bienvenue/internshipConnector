@@ -20,6 +20,7 @@ class ApplicationModel {
   final String applicantId;
   final String applicantName;
   final String coverNote;
+  final String? resumeUrl;
   final ApplicationStatus status;
   final DateTime appliedAt;
   final DateTime? updatedAt;
@@ -34,6 +35,7 @@ class ApplicationModel {
     required this.applicantId,
     required this.applicantName,
     required this.coverNote,
+    this.resumeUrl,
     required this.status,
     required this.appliedAt,
     this.updatedAt,
@@ -51,6 +53,7 @@ class ApplicationModel {
       applicantId: data['applicantId'] ?? '',
       applicantName: data['applicantName'] ?? '',
       coverNote: data['coverNote'] ?? '',
+      resumeUrl: data['resumeUrl'],
       status: ApplicationStatus.values.firstWhere(
         (s) => s.name == data['status'],
         orElse: () => ApplicationStatus.applied,
@@ -69,6 +72,7 @@ class ApplicationModel {
     'applicantId': applicantId,
     'applicantName': applicantName,
     'coverNote': coverNote,
+    'resumeUrl': resumeUrl,
     'status': status.name,
     'appliedAt': Timestamp.fromDate(appliedAt),
     'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
@@ -85,6 +89,7 @@ class ApplicationModel {
         applicantId: applicantId,
         applicantName: applicantName,
         coverNote: coverNote,
+        resumeUrl: resumeUrl,
         status: status ?? this.status,
         appliedAt: appliedAt,
         updatedAt: updatedAt ?? this.updatedAt,
