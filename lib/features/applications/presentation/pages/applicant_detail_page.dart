@@ -1,8 +1,7 @@
-// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
-import 'dart:html' as html;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'resume_viewer_page.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_toast.dart';
 import '../../../auth/data/models/user_model.dart';
@@ -91,8 +90,15 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
   }
 
   void _openResume(String url) {
-    final viewable = url.replaceFirst('/image/upload/', '/raw/upload/');
-    html.window.open(viewable, '_blank');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResumeViewerPage(
+          url: url,
+          applicantName: _app.applicantName,
+        ),
+      ),
+    );
   }
 
   @override
