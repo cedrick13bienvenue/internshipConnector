@@ -167,6 +167,8 @@ class AuthRepository {
     });
   }
 
+  Future<UserModel> getUserById(String uid) => _fetchUser(uid);
+
   Future<UserModel> completeOnboarding(String uid) async {
     await _db.collection('users').doc(uid).update({'isOnboarded': true});
     return _fetchUser(uid);
