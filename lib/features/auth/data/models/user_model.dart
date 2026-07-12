@@ -14,6 +14,7 @@ class UserModel {
   final DateTime createdAt;
   final bool isOnboarded;
   final bool isEmailVerified;
+  final List<String> savedOpportunities;
 
   const UserModel({
     required this.uid,
@@ -27,6 +28,7 @@ class UserModel {
     required this.createdAt,
     this.isOnboarded = false,
     this.isEmailVerified = false,
+    this.savedOpportunities = const [],
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -46,6 +48,7 @@ class UserModel {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       isOnboarded: data['isOnboarded'] ?? false,
       isEmailVerified: data['isEmailVerified'] ?? false,
+      savedOpportunities: List<String>.from(data['savedOpportunities'] ?? []),
     );
   }
 
@@ -60,6 +63,7 @@ class UserModel {
     'createdAt': Timestamp.fromDate(createdAt),
     'isOnboarded': isOnboarded,
     'isEmailVerified': isEmailVerified,
+    'savedOpportunities': savedOpportunities,
   };
 
   UserModel copyWith({
@@ -70,6 +74,7 @@ class UserModel {
     String? program,
     bool? isOnboarded,
     bool? isEmailVerified,
+    List<String>? savedOpportunities,
   }) => UserModel(
     uid: uid,
     email: email,
@@ -82,5 +87,6 @@ class UserModel {
     createdAt: createdAt,
     isOnboarded: isOnboarded ?? this.isOnboarded,
     isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+    savedOpportunities: savedOpportunities ?? this.savedOpportunities,
   );
 }
