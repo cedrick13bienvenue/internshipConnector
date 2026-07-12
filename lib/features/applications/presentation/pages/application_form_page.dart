@@ -1,5 +1,7 @@
+import 'dart:async';
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
+import 'dart:html' as html;
 import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -45,23 +47,39 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
   }
 
   Future<void> _pickResume() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-      withData: true,
-    );
-    if (result == null || result.files.isEmpty) return;
-    final file = result.files.single;
-    final bytes = file.bytes;
-    if (bytes == null) return;
-    if (bytes.lengthInBytes > _maxResumeBytes) {
-      if (mounted) AppToast.showError(context, 'Resume must be under 5 MB.');
-      return;
-    }
-    setState(() {
-      _resumeBytes = bytes;
-      _resumeFileName = file.name;
+    final completer = Completer<void>();
+    final input = html.FileUploadInputElement()
+      ..accept = 'application/pdf,.pdf';
+    input.click();
+
+    input.onChange.listen((_) {
+      final files = input.files;
+      if (files == null || files.isEmpty) {
+        completer.complete();
+        return;
+      }
+      final file = files.first;
+      if (file.size > _maxResumeBytes) {
+        if (mounted) AppToast.showError(context, 'Resume must be under 5 MB.');
+        completer.complete();
+        return;
+      }
+      final reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onLoad.listen((_) {
+        final result = reader.result;
+        if (result is List<int> && mounted) {
+          setState(() {
+            _resumeBytes = Uint8List.fromList(result);
+            _resumeFileName = file.name;
+          });
+        }
+        completer.complete();
+      });
+      reader.onError.listen((_) => completer.complete());
     });
+
+    await completer.future;
   }
 
   void _removeResume() => setState(() {
