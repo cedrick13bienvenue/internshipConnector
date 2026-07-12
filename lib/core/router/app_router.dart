@@ -20,6 +20,8 @@ import '../../features/auth/data/models/user_model.dart';
 import '../../features/profile/presentation/pages/edit_student_profile_page.dart';
 import '../../features/opportunities/presentation/pages/edit_opportunity_page.dart';
 import '../../features/opportunities/data/models/opportunity_model.dart';
+import '../../features/applications/data/models/application_model.dart';
+import '../../features/applications/presentation/pages/applicant_detail_page.dart';
 
 class AppRoutes {
   static const splash = '/';
@@ -113,6 +115,12 @@ GoRouter buildRouter(AuthCubit authCubit) {
           GoRoute(path: 'startup/register', builder: (_, __) => const StartupRegistrationPage()),
           GoRoute(path: 'edit-profile', builder: (_, __) => const EditStudentProfilePage()),
           GoRoute(path: 'edit-startup', builder: (_, __) => const EditStartupPage()),
+          GoRoute(
+            path: 'applicant/:id',
+            builder: (_, state) => ApplicantDetailPage(
+              application: state.extra as ApplicationModel,
+            ),
+          ),
           GoRoute(
             path: 'edit-opportunity/:id',
             builder: (_, state) => EditOpportunityPage(
