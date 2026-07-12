@@ -71,6 +71,10 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
 
   Future<void> _submit(OpportunityModel opp) async {
     if (!_formKey.currentState!.validate()) return;
+    if (_resumeBytes == null) {
+      AppToast.showError(context, 'Please upload your resume before submitting.');
+      return;
+    }
     final authState = context.read<AuthCubit>().state;
     if (authState is! AuthAuthenticated) return;
     final user = authState.user;
@@ -174,7 +178,7 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
                 Text('Resume', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 6),
                 Text(
-                  'PDF only · Max 5 MB · Optional',
+                  'PDF only · Max 5 MB · Required',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 14),
