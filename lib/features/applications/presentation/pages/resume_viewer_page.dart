@@ -26,7 +26,7 @@ class _ResumeViewerPageState extends State<ResumeViewerPage> {
   void initState() {
     super.initState();
     _viewId = 'resume-viewer-${DateTime.now().microsecondsSinceEpoch}';
-    final url = widget.url.replaceFirst('/image/upload/', '/raw/upload/');
+    final url = widget.url;
 
     ui.platformViewRegistry.registerViewFactory(_viewId, (int id) {
       final iframe = html.IFrameElement()

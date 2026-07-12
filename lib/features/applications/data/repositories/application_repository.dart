@@ -45,7 +45,7 @@ class ApplicationRepository {
 
   Future<String> uploadResume(String applicantId, String opportunityId, Uint8List bytes) async {
     final cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME']!;
-    final preset = dotenv.env['CLOUDINARY_UPLOAD_PRESET']!;
+    final preset = dotenv.env['CLOUDINARY_RESUME_PRESET']!;
     final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/raw/upload');
     final publicId = 'resumes/${applicantId}_$opportunityId';
     final request = http.MultipartRequest('POST', uri)
