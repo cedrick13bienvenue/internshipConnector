@@ -119,14 +119,7 @@ class _Header extends StatelessWidget {
                     ? NetworkImage(opp.startupLogoUrl!)
                     : null,
                 child: opp.startupLogoUrl == null
-                    ? Text(
-                        opp.startupName.isNotEmpty ? opp.startupName[0].toUpperCase() : '?',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      )
+                    ? const Icon(Icons.business_rounded, color: Colors.white, size: 28)
                     : null,
               ),
               const SizedBox(width: 14),
