@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +22,21 @@ class ApplicationFormPage extends StatefulWidget {
 class _ApplicationFormPageState extends State<ApplicationFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _coverNoteController = TextEditingController();
+  late final Future<OpportunityModel> _opportunityFuture;
+  final _repo = ApplicationRepository();
+
+  Uint8List? _resumeBytes;
+  String? _resumeFileName;
   bool _isSubmitting = false;
+  bool _isUploadingResume = false;
+
+  static const int _maxResumeBytes = 5 * 1024 * 1024;
+
+  @override
+  void initState() {
+    super.initState();
+    _opportunityFuture = OpportunityRepository().getById(widget.opportunityId);
+  }
 
   @override
   void dispose() {
@@ -28,65 +44,97 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
     super.dispose();
   }
 
+  Future<void> _pickResume() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.single;
+    final bytes = file.bytes;
+    if (bytes == null) return;
+    if (bytes.lengthInBytes > _maxResumeBytes) {
+      if (mounted) AppToast.showError(context, 'Resume must be under 5 MB.');
+      return;
+    }
+    setState(() {
+      _resumeBytes = bytes;
+      _resumeFileName = file.name;
+    });
+  }
+
+  void _removeResume() => setState(() {
+        _resumeBytes = null;
+        _resumeFileName = null;
+      });
+
   Future<void> _submit(OpportunityModel opp) async {
     if (!_formKey.currentState!.validate()) return;
-
     final authState = context.read<AuthCubit>().state;
     if (authState is! AuthAuthenticated) return;
     final user = authState.user;
 
     setState(() => _isSubmitting = true);
 
-    final application = ApplicationModel(
-      id: '',
-      opportunityId: opp.id,
-      opportunityTitle: opp.title,
-      startupId: opp.startupId,
-      startupName: opp.startupName,
-      startupLogoUrl: opp.startupLogoUrl,
-      applicantId: user.uid,
-      applicantName: user.fullName,
-      coverNote: _coverNoteController.text.trim(),
-      status: ApplicationStatus.applied,
-      appliedAt: DateTime.now(),
-    );
-
     try {
-      await ApplicationRepository().submit(application);
+      String? resumeUrl;
+      if (_resumeBytes != null) {
+        setState(() => _isUploadingResume = true);
+        resumeUrl = await _repo.uploadResume(user.uid, opp.id, _resumeBytes!);
+        if (mounted) setState(() => _isUploadingResume = false);
+      }
+
+      final application = ApplicationModel(
+        id: '',
+        opportunityId: opp.id,
+        opportunityTitle: opp.title,
+        startupId: opp.startupId,
+        startupName: opp.startupName,
+        startupLogoUrl: opp.startupLogoUrl,
+        applicantId: user.uid,
+        applicantName: user.fullName,
+        coverNote: _coverNoteController.text.trim(),
+        resumeUrl: resumeUrl,
+        status: ApplicationStatus.applied,
+        appliedAt: DateTime.now(),
+      );
+
+      await _repo.submit(application);
       if (mounted) {
-        AppToast.showSuccess(context, 'Application submitted successfully!');
+        AppToast.showSuccess(context, 'Application submitted!');
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isSubmitting = false);
-        AppToast.showError(context, 'Failed to submit: $e');
+        setState(() {
+          _isSubmitting = false;
+          _isUploadingResume = false;
+        });
+        AppToast.showError(context, 'Failed to submit. Please try again.');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<OpportunityModel>(
-      future: OpportunityRepository().getById(widget.opportunityId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
-        }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: Center(
+    return Scaffold(
+      appBar: AppBar(title: const Text('Apply')),
+      body: FutureBuilder<OpportunityModel>(
+        future: _opportunityFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return Center(
               child: Text(snapshot.error?.toString() ?? 'Opportunity not found.'),
-            ),
-          );
-        }
+            );
+          }
 
-        final opp = snapshot.data!;
+          final opp = snapshot.data!;
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('Apply')),
-          body: Form(
+          return Form(
             key: _formKey,
             child: ListView(
               padding: const EdgeInsets.all(24),
@@ -122,6 +170,58 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 24),
+                Text('Resume', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 6),
+                Text(
+                  'PDF only · Max 5 MB · Optional',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 14),
+                if (_resumeFileName != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.picture_as_pdf_rounded,
+                            color: AppColors.primary, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _resumeFileName!,
+                            style: const TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded,
+                              color: AppColors.textHint, size: 18),
+                          onPressed: _removeResume,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  OutlinedButton.icon(
+                    onPressed: _isSubmitting ? null : _pickResume,
+                    icon: const Icon(Icons.upload_file_rounded, size: 18),
+                    label: const Text('Upload Resume (PDF)'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                      side: const BorderSide(color: AppColors.divider),
+                      foregroundColor: AppColors.textSecondary,
+                    ),
+                  ),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -129,10 +229,23 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
                     onPressed: _isSubmitting ? null : () => _submit(opp),
                     style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                     child: _isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                _isUploadingResume
+                                    ? 'Uploading resume...'
+                                    : 'Submitting...',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ],
                           )
                         : const Text('Submit Application', style: TextStyle(fontSize: 16)),
                   ),
@@ -140,9 +253,9 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
                 const SizedBox(height: 24),
               ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -167,13 +280,7 @@ class _OpportunitySummary extends StatelessWidget {
             backgroundImage:
                 opp.startupLogoUrl != null ? NetworkImage(opp.startupLogoUrl!) : null,
             child: opp.startupLogoUrl == null
-                ? Text(
-                    opp.startupName.isNotEmpty ? opp.startupName[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  )
+                ? const Icon(Icons.business_rounded, color: AppColors.primary, size: 20)
                 : null,
           ),
           const SizedBox(width: 12),
@@ -214,7 +321,8 @@ class _OpportunitySummary extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+            color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.w600),
       ),
     );
   }
