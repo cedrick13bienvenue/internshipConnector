@@ -90,7 +90,10 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
     AppToast.showSuccess(context, 'Email copied!');
   }
 
-  void _openResume(String url) => html.window.open(url, '_blank');
+  void _openResume(String url) {
+    final viewable = url.replaceFirst('/image/upload/', '/raw/upload/');
+    html.window.open(viewable, '_blank');
+  }
 
   @override
   Widget build(BuildContext context) {
