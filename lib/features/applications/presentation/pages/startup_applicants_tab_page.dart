@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/application_model.dart';
 import '../../data/repositories/application_repository.dart';
@@ -65,7 +66,13 @@ class StartupApplicantsTabPage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 itemCount: applications.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, i) => _ApplicantCard(application: applications[i]),
+                itemBuilder: (context, i) => _ApplicantCard(
+                  application: applications[i],
+                  onTap: () => context.push(
+                    '/home/applicant/${applications[i].id}',
+                    extra: applications[i],
+                  ),
+                ),
               );
             },
           );
@@ -97,7 +104,8 @@ String _statusLabel(ApplicationStatus s) => switch (s) {
 
 class _ApplicantCard extends StatefulWidget {
   final ApplicationModel application;
-  const _ApplicantCard({required this.application});
+  final VoidCallback onTap;
+  const _ApplicantCard({required this.application, required this.onTap});
 
   @override
   State<_ApplicantCard> createState() => _ApplicantCardState();
@@ -173,7 +181,10 @@ class _ApplicantCardState extends State<_ApplicantCard> {
   Widget build(BuildContext context) {
     final color = _statusColor(widget.application.status);
     return Card(
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: widget.onTap,
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,6 +278,7 @@ class _ApplicantCardState extends State<_ApplicantCard> {
           ],
         ),
       ),
+    ),
     );
   }
 }
