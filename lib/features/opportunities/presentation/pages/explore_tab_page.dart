@@ -4,9 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/models/opportunity_model.dart';
 import '../../data/repositories/opportunity_repository.dart';
 import '../cubit/opportunity_cubit.dart';
+import '../widgets/bookmark_button.dart';
 import '../widgets/opportunity_card.dart';
 
 class ExploreTabPage extends StatefulWidget {
@@ -22,6 +24,7 @@ class _ExploreTabPageState extends State<ExploreTabPage> {
   Timer? _debounce;
   String _query = '';
   String? _selectedCategory;
+  bool _showSaved = false;
 
   @override
   void initState() {
@@ -45,14 +48,15 @@ class _ExploreTabPageState extends State<ExploreTabPage> {
     setState(() => _selectedCategory = _selectedCategory == category ? null : category);
   }
 
-  List<OpportunityModel> _applyFilters(List<OpportunityModel> all) {
+  List<OpportunityModel> _applyFilters(List<OpportunityModel> all, List<String> savedIds) {
     return all.where((o) {
       final matchesQuery = _query.isEmpty ||
           o.title.toLowerCase().contains(_query) ||
           o.startupName.toLowerCase().contains(_query) ||
           o.skillsRequired.any((s) => s.toLowerCase().contains(_query));
       final matchesCategory = _selectedCategory == null || o.category == _selectedCategory;
-      return matchesQuery && matchesCategory;
+      final matchesSaved = !_showSaved || savedIds.contains(o.id);
+      return matchesQuery && matchesCategory && matchesSaved;
     }).toList();
   }
 
@@ -67,135 +71,181 @@ class _ExploreTabPageState extends State<ExploreTabPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child: BlocBuilder<OpportunityCubit, OpportunityState>(
-        builder: (context, state) {
-          final isLoading = state is OpportunityLoading || state is OpportunityInitial;
-          final opportunities = state is OpportunityLoaded
-              ? _applyFilters(state.opportunities)
-              : <OpportunityModel>[];
+    final authState = context.read<AuthCubit>().state;
+    final savedIds = authState is AuthAuthenticated
+        ? authState.user.savedOpportunities
+        : <String>[];
 
-          return SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Explore', style: Theme.of(context).textTheme.headlineMedium),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Discover opportunities from ALU startups',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 20),
-                        TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search by title, startup, or skill...',
-                            prefixIcon: const Icon(Icons.search_rounded),
-                            suffixIcon: _query.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _query = '');
-                                    },
-                                  )
-                                : null,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.divider),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.divider),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                            ),
-                            filled: true,
-                            fillColor: AppColors.surface,
+    final oppState = _cubit.state;
+    final isLoading = oppState is OpportunityLoading || oppState is OpportunityInitial;
+    final opportunities = oppState is OpportunityLoaded
+        ? _applyFilters(oppState.opportunities, savedIds)
+        : <OpportunityModel>[];
+    final hasError = oppState is OpportunityError;
+    final errorMessage = hasError ? oppState.message : '';
+
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthCubit, AuthState>(listener: (_, __) => setState(() {})),
+        BlocListener<OpportunityCubit, OpportunityState>(
+          bloc: _cubit,
+          listener: (_, __) => setState(() {}),
+        ),
+      ],
+      child: BlocProvider.value(
+        value: _cubit,
+        child: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Explore', style: Theme.of(context).textTheme.headlineMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Discover opportunities from ALU startups',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search by title, startup, or skill...',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: _query.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear_rounded),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _query = '');
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: AppColors.divider),
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: AppColors.divider),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surface,
                         ),
-                        const SizedBox(height: 20),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 36,
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      ChoiceChip(
+                        avatar: const Icon(Icons.bookmark_rounded, size: 14),
+                        label: const Text('Saved'),
+                        selected: _showSaved,
+                        onSelected: (_) => setState(() {
+                          _showSaved = !_showSaved;
+                          _selectedCategory = null;
+                        }),
+                        backgroundColor: AppColors.surface,
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: _showSaved ? AppColors.surface : AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                              color: _showSaved ? AppColors.primary : AppColors.divider),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ...AppConstants.opportunityCategories.map((cat) {
+                        final isSelected = cat == _selectedCategory;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(cat),
+                            selected: isSelected,
+                            onSelected: (_) {
+                              _onCategoryTap(cat);
+                              setState(() => _showSaved = false);
+                            },
+                            backgroundColor: AppColors.surface,
+                            selectedColor: AppColors.primary,
+                            labelStyle: TextStyle(
+                              color: isSelected ? AppColors.surface : AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                  color: isSelected ? AppColors.primary : AppColors.divider),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              if (isLoading)
+                const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+              else if (hasError)
+                SliverFillRemaining(
+                    child: Center(child: Text(errorMessage)))
+              else if (opportunities.isEmpty)
+                const SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_off_rounded, size: 56, color: AppColors.textHint),
+                        SizedBox(height: 12),
+                        Text(
+                          'No opportunities match your search.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
                       ],
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 36,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: AppConstants.opportunityCategories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, i) {
-                        final cat = AppConstants.opportunityCategories[i];
-                        final isSelected = cat == _selectedCategory;
-                        return ChoiceChip(
-                          label: Text(cat),
-                          selected: isSelected,
-                          onSelected: (_) => _onCategoryTap(cat),
-                          backgroundColor: AppColors.surface,
-                          selectedColor: AppColors.primary,
-                          labelStyle: TextStyle(
-                            color: isSelected ? AppColors.surface : AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                                color: isSelected ? AppColors.primary : AppColors.divider),
-                          ),
-                        );
-                      },
-                    ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  sliver: SliverList.builder(
+                    itemCount: opportunities.length,
+                    itemBuilder: (context, i) {
+                      final opp = opportunities[i];
+                      return OpportunityCard(
+                        opportunity: opp,
+                        onTap: () => context.push('/home/opportunity/${opp.id}'),
+                        trailing: BookmarkButton(opportunityId: opp.id),
+                      );
+                    },
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                if (isLoading)
-                  const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
-                else if (state is OpportunityError)
-                  SliverFillRemaining(child: Center(child: Text(state.message)))
-                else if (opportunities.isEmpty)
-                  const SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.search_off_rounded, size: 56, color: AppColors.textHint),
-                          SizedBox(height: 12),
-                          Text(
-                            'No opportunities match your search.',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                    sliver: SliverList.builder(
-                      itemCount: opportunities.length,
-                      itemBuilder: (context, i) => OpportunityCard(
-                        opportunity: opportunities[i],
-                        onTap: () => context.push('/home/opportunity/${opportunities[i].id}'),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       ),
     );
   }
 }
+
