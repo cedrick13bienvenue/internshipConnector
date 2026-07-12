@@ -138,6 +138,21 @@ class AuthCubit extends Cubit<AuthState> {
     return photoUrl;
   }
 
+  Future<void> toggleSaveOpportunity(String opportunityId) async {
+    final current = state;
+    if (current is! AuthAuthenticated) return;
+    final isSaved = current.user.savedOpportunities.contains(opportunityId);
+    final updatedList = isSaved
+        ? (List<String>.from(current.user.savedOpportunities)..remove(opportunityId))
+        : [...current.user.savedOpportunities, opportunityId];
+    emit(AuthAuthenticated(current.user.copyWith(savedOpportunities: updatedList)));
+    try {
+      await _repository.toggleSaveOpportunity(current.user.uid, opportunityId, !isSaved);
+    } catch (_) {
+      emit(current);
+    }
+  }
+
   Future<void> updateStudentProfile({
     required String fullName,
     String? bio,
@@ -146,18 +161,23 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     final current = state;
     if (current is! AuthAuthenticated) return;
+    emit(AuthAuthenticated(current.user.copyWith(
+      fullName: fullName,
+      bio: bio,
+      skills: skills,
+      program: program,
+    )));
     try {
-      final updated = await _repository.updateStudentProfile(
+      await _repository.updateStudentProfile(
         uid: current.user.uid,
         fullName: fullName,
         bio: bio,
         skills: skills,
         program: program,
       );
-      emit(AuthAuthenticated(updated));
     } catch (e) {
-      emit(AuthError(_formatError(e)));
       emit(current);
+      emit(AuthError(_formatError(e)));
     }
   }
 
