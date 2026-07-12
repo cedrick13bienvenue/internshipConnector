@@ -43,15 +43,7 @@ class OpportunityCard extends StatelessWidget {
                         ? NetworkImage(opportunity.startupLogoUrl!)
                         : null,
                     child: opportunity.startupLogoUrl == null
-                        ? Text(
-                            opportunity.startupName.isNotEmpty
-                                ? opportunity.startupName[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          )
+                        ? const Icon(Icons.business_rounded, color: AppColors.primary, size: 20)
                         : null,
                   ),
                   const SizedBox(width: 12),
