@@ -119,7 +119,7 @@ class AuthRepository {
     return _fetchUser(uid);
   }
 
-  Future<UserModel> updateStudentProfile({
+  Future<void> updateStudentProfile({
     required String uid,
     required String fullName,
     String? bio,
@@ -132,7 +132,6 @@ class AuthRepository {
       'skills': skills ?? [],
       'program': program,
     });
-    return _fetchUser(uid);
   }
 
   Future<String> uploadProfilePhoto(String uid, List<int> bytes) async {
@@ -158,6 +157,14 @@ class AuthRepository {
   Future<UserModel> updateProfilePhoto(String uid, String photoUrl) async {
     await _db.collection('users').doc(uid).update({'photoUrl': photoUrl});
     return _fetchUser(uid);
+  }
+
+  Future<void> toggleSaveOpportunity(String uid, String opportunityId, bool save) async {
+    await _db.collection('users').doc(uid).update({
+      'savedOpportunities': save
+          ? FieldValue.arrayUnion([opportunityId])
+          : FieldValue.arrayRemove([opportunityId]),
+    });
   }
 
   Future<UserModel> completeOnboarding(String uid) async {
