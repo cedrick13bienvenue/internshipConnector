@@ -7,6 +7,7 @@ import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../opportunities/presentation/cubit/opportunity_cubit.dart';
 import '../../../opportunities/data/repositories/opportunity_repository.dart';
+import '../../../opportunities/presentation/widgets/bookmark_button.dart';
 import '../../../opportunities/presentation/widgets/opportunity_card.dart';
 import '../../../startups/presentation/cubit/startup_cubit.dart';
 
@@ -182,10 +183,14 @@ class _StudentHome extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 sliver: SliverList.builder(
                   itemCount: opportunities.length,
-                  itemBuilder: (context, i) => OpportunityCard(
-                    opportunity: opportunities[i],
-                    onTap: () => context.push('/home/opportunity/${opportunities[i].id}'),
-                  ),
+                  itemBuilder: (context, i) {
+                    final opp = opportunities[i];
+                    return OpportunityCard(
+                      opportunity: opp,
+                      onTap: () => context.push('/home/opportunity/${opp.id}'),
+                      trailing: BookmarkButton(opportunityId: opp.id),
+                    );
+                  },
                 ),
               );
             },
