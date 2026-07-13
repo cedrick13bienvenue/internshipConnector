@@ -28,7 +28,6 @@ class OpportunityRepository {
       .snapshots()
       .map((s) => s.docs
           .map(OpportunityModel.fromFirestore)
-          .where((o) => o.status != OpportunityStatus.closed)
           .toList()
         ..sort((a, b) => b.postedAt.compareTo(a.postedAt)));
 
@@ -56,4 +55,6 @@ class OpportunityRepository {
 
   Future<void> close(String id) =>
       _col.doc(id).update({'status': OpportunityStatus.closed.name});
+
+  Future<void> delete(String id) => _col.doc(id).delete();
 }

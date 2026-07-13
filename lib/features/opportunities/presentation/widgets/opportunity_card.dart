@@ -78,6 +78,8 @@ class OpportunityCard extends StatelessWidget {
                   _buildTag(opportunity.category),
                   _buildTag(opportunity.commitment),
                   _buildTag(opportunity.location),
+                  if (opportunity.status == OpportunityStatus.closed)
+                    _buildTag('Closed', isClosedBadge: true),
                 ],
               ),
               const SizedBox(height: 12),
@@ -86,13 +88,6 @@ class OpportunityCard extends StatelessWidget {
                   Icon(Icons.schedule_rounded, size: 14, color: AppColors.textHint),
                   const SizedBox(width: 4),
                   Text(_postedAgo, style: const TextStyle(color: AppColors.textHint, fontSize: 12)),
-                  const Spacer(),
-                  Icon(Icons.people_outline_rounded, size: 14, color: AppColors.textHint),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${opportunity.applicantsCount} applicants',
-                    style: const TextStyle(color: AppColors.textHint, fontSize: 12),
-                  ),
                 ],
               ),
             ],
@@ -102,16 +97,20 @@ class OpportunityCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTag(String label) {
+  Widget _buildTag(String label, {bool isClosedBadge = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight,
+        color: isClosedBadge ? AppColors.error.withValues(alpha: 0.1) : AppColors.primaryLight,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
-        style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: isClosedBadge ? AppColors.error : AppColors.primary,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

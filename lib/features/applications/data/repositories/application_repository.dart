@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/application_model.dart';
+import '../../../notifications/data/repositories/notification_repository.dart';
 
 class ApplicationRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -39,11 +40,34 @@ class ApplicationRepository {
 
   Future<void> submit(ApplicationModel application) => _col.add(application.toFirestore());
 
-  Future<void> updateStatus(String id, ApplicationStatus status) => _col.doc(id).update({
-    'status': status.name,
-    'updatedAt': Timestamp.fromDate(DateTime.now()),
-  });
+  Future<void> updateStatus(
+    String id,
+    ApplicationStatus status, {
+    required String applicantId,
+    required String opportunityTitle,
+  }) async {
+    await _col.doc(id).update({
+      'status': status.name,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    });
+    await NotificationRepository().create(
+      userId: applicantId,
+      title: 'Application Update',
+      body: 'Your application for "$opportunityTitle" has been moved to ${_statusLabel(status)}.',
+      relatedId: id,
+    );
+  }
 
   Future<void> toggleStar(String id, bool isStarred) =>
       _col.doc(id).update({'isStarred': isStarred});
 }
+
+String _statusLabel(ApplicationStatus s) => switch (s) {
+      ApplicationStatus.applied => 'Applied',
+      ApplicationStatus.underReview => 'Under Review',
+      ApplicationStatus.shortlisted => 'Shortlisted',
+      ApplicationStatus.interview => 'Interview',
+      ApplicationStatus.accepted => 'Accepted',
+      ApplicationStatus.rejected => 'Rejected',
+      ApplicationStatus.closed => 'Closed',
+    };

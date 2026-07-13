@@ -32,7 +32,12 @@ class _ApplicantDetailPageState extends State<ApplicantDetailPage> {
   Future<void> _updateStatus(ApplicationStatus newStatus) async {
     setState(() => _updating = true);
     try {
-      await ApplicationRepository().updateStatus(_app.id, newStatus);
+      await ApplicationRepository().updateStatus(
+        _app.id,
+        newStatus,
+        applicantId: _app.applicantId,
+        opportunityTitle: _app.opportunityTitle,
+      );
       if (mounted) AppToast.showSuccess(context, 'Status updated.');
     } catch (_) {
       if (mounted) AppToast.showError(context, 'Failed to update status.');

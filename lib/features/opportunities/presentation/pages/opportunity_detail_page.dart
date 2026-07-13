@@ -65,13 +65,12 @@ class OpportunityDetailPage extends StatelessWidget {
                     ],
                     if (isStudent) ...[
                       const SizedBox(height: 32),
-                      OutlinedButton.icon(
+                      OutlinedButton(
                         onPressed: () => context.push('/home/startup/${opp.startupId}'),
-                        icon: const Icon(Icons.storefront_rounded, size: 18),
-                        label: Text('View ${opp.startupName}'),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 48),
                         ),
+                        child: Text('View ${opp.startupName}'),
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
@@ -204,17 +203,6 @@ class _MetaRow extends StatelessWidget {
       spacing: 16,
       runSpacing: 8,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.people_outline_rounded, size: 16, color: AppColors.textHint),
-            const SizedBox(width: 5),
-            Text(
-              '${opp.applicantsCount} applicants',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-            ),
-          ],
-        ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [

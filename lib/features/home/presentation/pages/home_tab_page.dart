@@ -5,6 +5,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../notifications/data/models/notification_model.dart';
+import '../../../notifications/data/repositories/notification_repository.dart';
+import '../../../notifications/presentation/pages/notifications_page.dart';
+import '../../../opportunities/data/models/opportunity_model.dart';
 import '../../../opportunities/presentation/cubit/opportunity_cubit.dart';
 import '../../../opportunities/data/repositories/opportunity_repository.dart';
 import '../../../opportunities/presentation/widgets/bookmark_button.dart';
@@ -88,14 +92,69 @@ class _StudentHome extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Hi, ${user.fullName.split(' ').first} 👋',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Find your next opportunity',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hi, ${user.fullName.split(' ').first} 👋',
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Find your next opportunity',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                      StreamBuilder<List<NotificationModel>>(
+                        stream: NotificationRepository().watchForUser(user.uid),
+                        builder: (context, snap) {
+                          final unread = (snap.data ?? [])
+                              .where((n) => !n.isRead)
+                              .length;
+                          return Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.notifications_outlined),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => NotificationsPage(userId: user.uid),
+                                  ),
+                                ),
+                              ),
+                              if (unread > 0)
+                                Positioned(
+                                  right: 8,
+                                  top: 8,
+                                  child: Container(
+                                    width: 16,
+                                    height: 16,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        unread > 9 ? '9+' : '$unread',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   GestureDetector(
@@ -276,7 +335,9 @@ class _StartupHome extends StatelessWidget {
                                   BlocBuilder<OpportunityCubit, OpportunityState>(
                                     builder: (context, oppState) {
                                       final count = oppState is OpportunityLoaded
-                                          ? oppState.opportunities.length
+                                          ? oppState.opportunities
+                                              .where((o) => o.status == OpportunityStatus.open)
+                                              .length
                                           : 0;
                                       return Text(
                                         '$count',
@@ -355,7 +416,31 @@ class _StartupHome extends StatelessWidget {
                                   builder: (ctx) => AlertDialog(
                                     title: const Text('Close Opportunity'),
                                     content: const Text(
-                                        'This stops new applications. Cannot be undone.'),
+                                        'Closing stops new applications but keeps the record visible. You can still review existing applicants.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.warning),
+                                        child: const Text('Close It'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true) {
+                                  await OpportunityRepository().close(opp.id);
+                                }
+                              } else if (v == 'delete') {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete Opportunity'),
+                                    content: const Text(
+                                        'This permanently removes the opportunity and all its data from the platform. This cannot be undone.'),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(ctx, false),
@@ -365,13 +450,13 @@ class _StartupHome extends StatelessWidget {
                                         onPressed: () => Navigator.pop(ctx, true),
                                         style: ElevatedButton.styleFrom(
                                             backgroundColor: AppColors.error),
-                                        child: const Text('Close It'),
+                                        child: const Text('Delete Forever'),
                                       ),
                                     ],
                                   ),
                                 );
                                 if (confirmed == true) {
-                                  await OpportunityRepository().close(opp.id);
+                                  await OpportunityRepository().delete(opp.id);
                                 }
                               }
                             },
@@ -384,11 +469,23 @@ class _StartupHome extends StatelessWidget {
                                   contentPadding: EdgeInsets.zero,
                                 ),
                               ),
+                              if (opp.status == OpportunityStatus.open)
+                                const PopupMenuItem(
+                                  value: 'close',
+                                  child: ListTile(
+                                    leading: Icon(Icons.pause_circle_outline_rounded,
+                                        color: AppColors.warning),
+                                    title: Text('Close',
+                                        style: TextStyle(color: AppColors.warning)),
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
                               const PopupMenuItem(
-                                value: 'close',
+                                value: 'delete',
                                 child: ListTile(
-                                  leading: Icon(Icons.close_rounded, color: AppColors.error),
-                                  title: Text('Close',
+                                  leading: Icon(Icons.delete_forever_rounded,
+                                      color: AppColors.error),
+                                  title: Text('Delete',
                                       style: TextStyle(color: AppColors.error)),
                                   contentPadding: EdgeInsets.zero,
                                 ),
