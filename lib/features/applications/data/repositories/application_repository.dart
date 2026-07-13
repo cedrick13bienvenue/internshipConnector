@@ -43,4 +43,7 @@ class ApplicationRepository {
     'status': status.name,
     'updatedAt': Timestamp.fromDate(DateTime.now()),
   });
+
+  Future<void> toggleStar(String id, bool isStarred) =>
+      _col.doc(id).update({'isStarred': isStarred});
 }
