@@ -63,16 +63,16 @@ class OpportunityDetailPage extends StatelessWidget {
                         children: opp.skillsRequired.map((s) => Chip(label: Text(s))).toList(),
                       ),
                     ],
-                    const SizedBox(height: 32),
-                    OutlinedButton.icon(
-                      onPressed: () => context.push('/home/startup/${opp.startupId}'),
-                      icon: const Icon(Icons.storefront_rounded, size: 18),
-                      label: Text('View ${opp.startupName}'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                    ),
                     if (isStudent) ...[
+                      const SizedBox(height: 32),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push('/home/startup/${opp.startupId}'),
+                        icon: const Icon(Icons.storefront_rounded, size: 18),
+                        label: Text('View ${opp.startupName}'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
