@@ -1,4 +1,5 @@
 // ignore: avoid_web_libraries_in_flutter, deprecated_member_use
+import 'dart:async';
 import 'dart:html' as html;
 import 'dart:ui_web' as ui;
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class ResumeBody extends StatefulWidget {
 
 class _ResumeBodyState extends State<ResumeBody> {
   late final String _viewId;
+  Timer? _fallback;
   bool _loaded = false;
 
   static String _toEmbedUrl(String raw) {
@@ -30,22 +32,33 @@ class _ResumeBodyState extends State<ResumeBody> {
     return raw;
   }
 
+  void _markLoaded() {
+    if (mounted && !_loaded) setState(() => _loaded = true);
+  }
+
   @override
   void initState() {
     super.initState();
     _viewId = 'resume-viewer-${DateTime.now().microsecondsSinceEpoch}';
     final embedUrl = _toEmbedUrl(widget.url);
+
     ui.platformViewRegistry.registerViewFactory(_viewId, (int id) {
       final iframe = html.IFrameElement()
         ..src = embedUrl
         ..style.border = 'none'
         ..style.width = '100%'
         ..style.height = '100%'
-        ..onLoad.listen((_) {
-          if (mounted) setState(() => _loaded = true);
-        });
+        ..onLoad.listen((_) => _markLoaded());
       return iframe;
     });
+
+    _fallback = Timer(const Duration(seconds: 4), _markLoaded);
+  }
+
+  @override
+  void dispose() {
+    _fallback?.cancel();
+    super.dispose();
   }
 
   @override
