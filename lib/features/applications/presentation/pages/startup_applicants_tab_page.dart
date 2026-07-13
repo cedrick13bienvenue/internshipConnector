@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/application_model.dart';
 import '../../data/repositories/application_repository.dart';
 import '../../../startups/presentation/cubit/startup_cubit.dart';
+import 'opportunity_applicants_page.dart';
 
 class StartupApplicantsTabPage extends StatelessWidget {
   const StartupApplicantsTabPage({super.key});
@@ -48,10 +48,8 @@ class StartupApplicantsTabPage extends StatelessWidget {
                     children: [
                       Icon(Icons.people_outline_rounded, size: 56, color: AppColors.textHint),
                       SizedBox(height: 12),
-                      Text(
-                        'No applications yet.',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
+                      Text('No applications yet.',
+                          style: TextStyle(color: AppColors.textSecondary)),
                       SizedBox(height: 4),
                       Text(
                         'Applications will appear here once students apply.',
@@ -62,17 +60,39 @@ class StartupApplicantsTabPage extends StatelessWidget {
                   ),
                 );
               }
+
+              // Group by opportunityId
+              final grouped = <String, List<ApplicationModel>>{};
+              for (final app in applications) {
+                grouped.putIfAbsent(app.opportunityId, () => []).add(app);
+              }
+              final entries = grouped.entries.toList();
+
               return ListView.separated(
                 padding: const EdgeInsets.all(16),
-                itemCount: applications.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, i) => _ApplicantCard(
-                  application: applications[i],
-                  onTap: () => context.push(
-                    '/home/applicant/${applications[i].id}',
-                    extra: applications[i],
-                  ),
-                ),
+                itemCount: entries.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (context, i) {
+                  final entry = entries[i];
+                  final apps = entry.value;
+                  final title = apps.first.opportunityTitle;
+                  final starredCount = apps.where((a) => a.isStarred).length;
+
+                  return _OpportunityGroupCard(
+                    title: title,
+                    totalCount: apps.length,
+                    starredCount: starredCount,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OpportunityApplicantsPage(
+                          opportunityId: entry.key,
+                          opportunityTitle: title,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -82,203 +102,93 @@ class StartupApplicantsTabPage extends StatelessWidget {
   }
 }
 
-Color _statusColor(ApplicationStatus s) => switch (s) {
-      ApplicationStatus.applied => AppColors.info,
-      ApplicationStatus.underReview => AppColors.warning,
-      ApplicationStatus.shortlisted => AppColors.primary,
-      ApplicationStatus.interview => const Color(0xFF8B5CF6),
-      ApplicationStatus.accepted => AppColors.success,
-      ApplicationStatus.rejected => AppColors.error,
-      ApplicationStatus.closed => AppColors.textHint,
-    };
-
-String _statusLabel(ApplicationStatus s) => switch (s) {
-      ApplicationStatus.applied => 'Applied',
-      ApplicationStatus.underReview => 'Under Review',
-      ApplicationStatus.shortlisted => 'Shortlisted',
-      ApplicationStatus.interview => 'Interview',
-      ApplicationStatus.accepted => 'Accepted',
-      ApplicationStatus.rejected => 'Rejected',
-      ApplicationStatus.closed => 'Closed',
-    };
-
-class _ApplicantCard extends StatefulWidget {
-  final ApplicationModel application;
+class _OpportunityGroupCard extends StatelessWidget {
+  final String title;
+  final int totalCount;
+  final int starredCount;
   final VoidCallback onTap;
-  const _ApplicantCard({required this.application, required this.onTap});
+
+  const _OpportunityGroupCard({
+    required this.title,
+    required this.totalCount,
+    required this.starredCount,
+    required this.onTap,
+  });
 
   @override
-  State<_ApplicantCard> createState() => _ApplicantCardState();
-}
-
-class _ApplicantCardState extends State<_ApplicantCard> {
-  bool _updating = false;
-
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inDays > 0) return '${diff.inDays}d ago';
-    if (diff.inHours > 0) return '${diff.inHours}h ago';
-    return '${diff.inMinutes}m ago';
-  }
-
-  Future<void> _updateStatus(ApplicationStatus newStatus) async {
-    setState(() => _updating = true);
-    try {
-      await ApplicationRepository().updateStatus(widget.application.id, newStatus);
-    } finally {
-      if (mounted) setState(() => _updating = false);
-    }
-  }
-
-  void _showStatusSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 8),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-            child: Text(
-              'Update Status',
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-          ),
-          ...ApplicationStatus.values
-              .where((s) => s != ApplicationStatus.closed)
-              .map(
-                (s) => RadioListTile<ApplicationStatus>(
-                  title: Text(_statusLabel(s)),
-                  value: s,
-                  groupValue: widget.application.status,
-                  activeColor: _statusColor(s),
-                  onChanged: (v) async {
-                    Navigator.pop(ctx);
-                    if (v != null && v != widget.application.status) {
-                      await _updateStatus(v);
-                    }
-                  },
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.work_outline_rounded,
+                    color: AppColors.primary, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: Theme.of(context).textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        _badge(
+                          icon: Icons.people_rounded,
+                          label: '$totalCount applicant${totalCount == 1 ? '' : 's'}',
+                          color: AppColors.primary,
+                        ),
+                        if (starredCount > 0) ...[
+                          const SizedBox(width: 8),
+                          _badge(
+                            icon: Icons.star_rounded,
+                            label: '$starredCount starred',
+                            color: const Color(0xFFF59E0B),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
               ),
-          const SizedBox(height: 16),
-        ],
+              const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final color = _statusColor(widget.application.status);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: widget.onTap,
-        child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.primaryLight,
-                  child: Text(
-                    widget.application.applicantName.isNotEmpty
-                        ? widget.application.applicantName[0].toUpperCase()
-                        : '?',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.application.applicantName,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      Text(
-                        'for ${widget.application.opportunityTitle}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  _timeAgo(widget.application.appliedAt),
-                  style: const TextStyle(color: AppColors.textHint, fontSize: 11),
-                ),
-              ],
-            ),
-            if (widget.application.coverNote.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                widget.application.coverNote,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.textSecondary),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _statusLabel(widget.application.status),
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                _updating
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : TextButton(
-                        onPressed: _showStatusSheet,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          minimumSize: Size.zero,
-                        ),
-                        child: const Text('Update Status', style: TextStyle(fontSize: 12)),
-                      ),
-              ],
-            ),
-          ],
-        ),
+  Widget _badge({required IconData icon, required String label, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
       ),
-    ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 }
