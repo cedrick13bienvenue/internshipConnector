@@ -273,13 +273,20 @@ class _StartupHome extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    '${startup.activeOpportunities}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                  BlocBuilder<OpportunityCubit, OpportunityState>(
+                                    builder: (context, oppState) {
+                                      final count = oppState is OpportunityLoaded
+                                          ? oppState.opportunities.length
+                                          : 0;
+                                      return Text(
+                                        '$count',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      );
+                                    },
                                   ),
                                   const Text(
                                     'Active Opportunities',
