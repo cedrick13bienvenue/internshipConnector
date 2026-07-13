@@ -22,6 +22,7 @@ class ApplicationModel {
   final String coverNote;
   final String? resumeUrl;
   final ApplicationStatus status;
+  final bool isStarred;
   final DateTime appliedAt;
   final DateTime? updatedAt;
 
@@ -37,6 +38,7 @@ class ApplicationModel {
     required this.coverNote,
     this.resumeUrl,
     required this.status,
+    this.isStarred = false,
     required this.appliedAt,
     this.updatedAt,
   });
@@ -58,6 +60,7 @@ class ApplicationModel {
         (s) => s.name == data['status'],
         orElse: () => ApplicationStatus.applied,
       ),
+      isStarred: data['isStarred'] ?? false,
       appliedAt: (data['appliedAt'] as Timestamp).toDate(),
       updatedAt: data['updatedAt'] != null ? (data['updatedAt'] as Timestamp).toDate() : null,
     );
@@ -74,11 +77,12 @@ class ApplicationModel {
     'coverNote': coverNote,
     'resumeUrl': resumeUrl,
     'status': status.name,
+    'isStarred': isStarred,
     'appliedAt': Timestamp.fromDate(appliedAt),
     'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
   };
 
-  ApplicationModel copyWith({ApplicationStatus? status, DateTime? updatedAt}) =>
+  ApplicationModel copyWith({ApplicationStatus? status, bool? isStarred, DateTime? updatedAt}) =>
       ApplicationModel(
         id: id,
         opportunityId: opportunityId,
@@ -91,6 +95,7 @@ class ApplicationModel {
         coverNote: coverNote,
         resumeUrl: resumeUrl,
         status: status ?? this.status,
+        isStarred: isStarred ?? this.isStarred,
         appliedAt: appliedAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
