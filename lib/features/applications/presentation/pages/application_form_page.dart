@@ -1,7 +1,3 @@
-import 'dart:async';
-// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
-import 'dart:html' as html;
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -24,15 +20,11 @@ class ApplicationFormPage extends StatefulWidget {
 class _ApplicationFormPageState extends State<ApplicationFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _coverNoteController = TextEditingController();
+  final _resumeUrlController = TextEditingController();
   late final Future<OpportunityModel> _opportunityFuture;
   final _repo = ApplicationRepository();
 
-  Uint8List? _resumeBytes;
-  String? _resumeFileName;
   bool _isSubmitting = false;
-  bool _isUploadingResume = false;
-
-  static const int _maxResumeBytes = 5 * 1024 * 1024;
 
   @override
   void initState() {
@@ -43,56 +35,13 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
   @override
   void dispose() {
     _coverNoteController.dispose();
+    _resumeUrlController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickResume() async {
-    final completer = Completer<void>();
-    final input = html.FileUploadInputElement()
-      ..accept = 'application/pdf,.pdf';
-    input.click();
-
-    input.onChange.listen((_) {
-      final files = input.files;
-      if (files == null || files.isEmpty) {
-        completer.complete();
-        return;
-      }
-      final file = files.first;
-      if (file.size > _maxResumeBytes) {
-        if (mounted) AppToast.showError(context, 'Resume must be under 5 MB.');
-        completer.complete();
-        return;
-      }
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onLoad.listen((_) {
-        final result = reader.result;
-        if (result is List<int> && mounted) {
-          setState(() {
-            _resumeBytes = Uint8List.fromList(result);
-            _resumeFileName = file.name;
-          });
-        }
-        completer.complete();
-      });
-      reader.onError.listen((_) => completer.complete());
-    });
-
-    await completer.future;
-  }
-
-  void _removeResume() => setState(() {
-        _resumeBytes = null;
-        _resumeFileName = null;
-      });
-
   Future<void> _submit(OpportunityModel opp) async {
     if (!_formKey.currentState!.validate()) return;
-    if (_resumeBytes == null) {
-      AppToast.showError(context, 'Please upload your resume before submitting.');
-      return;
-    }
+
     final authState = context.read<AuthCubit>().state;
     if (authState is! AuthAuthenticated) return;
     final user = authState.user;
@@ -100,13 +49,6 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      String? resumeUrl;
-      if (_resumeBytes != null) {
-        setState(() => _isUploadingResume = true);
-        resumeUrl = await _repo.uploadResume(user.uid, opp.id, _resumeBytes!);
-        if (mounted) setState(() => _isUploadingResume = false);
-      }
-
       final application = ApplicationModel(
         id: '',
         opportunityId: opp.id,
@@ -117,7 +59,7 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
         applicantId: user.uid,
         applicantName: user.fullName,
         coverNote: _coverNoteController.text.trim(),
-        resumeUrl: resumeUrl,
+        resumeUrl: _resumeUrlController.text.trim(),
         status: ApplicationStatus.applied,
         appliedAt: DateTime.now(),
       );
@@ -129,10 +71,7 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-          _isUploadingResume = false;
-        });
+        setState(() => _isSubmitting = false);
         AppToast.showError(context, 'Failed to submit. Please try again.');
       }
     }
@@ -193,57 +132,38 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
                   },
                 ),
                 const SizedBox(height: 24),
-                Text('Resume', style: Theme.of(context).textTheme.titleMedium),
+                Text('Resume link', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 6),
                 Text(
-                  'PDF only · Max 5 MB · Required',
+                  'Paste a shareable link to your resume (Google Drive, Dropbox, etc.) · Required',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 14),
-                if (_resumeFileName != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                TextFormField(
+                  controller: _resumeUrlController,
+                  keyboardType: TextInputType.url,
+                  decoration: InputDecoration(
+                    hintText: 'https://drive.google.com/...',
+                    prefixIcon: const Icon(Icons.link_rounded, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.divider),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.picture_as_pdf_rounded,
-                            color: AppColors.primary, size: 22),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _resumeFileName!,
-                            style: const TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded,
-                              color: AppColors.textHint, size: 18),
-                          onPressed: _removeResume,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: _isSubmitting ? null : _pickResume,
-                    icon: const Icon(Icons.upload_file_rounded, size: 18),
-                    label: const Text('Upload Resume (PDF)'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                      side: const BorderSide(color: AppColors.divider),
-                      foregroundColor: AppColors.textSecondary,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                     ),
                   ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Resume link is required.';
+                    final uri = Uri.tryParse(v.trim());
+                    if (uri == null || !uri.hasScheme || !uri.scheme.startsWith('http')) {
+                      return 'Please enter a valid URL starting with http:// or https://';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -251,22 +171,17 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
                     onPressed: _isSubmitting ? null : () => _submit(opp),
                     style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
                     child: _isSubmitting
-                        ? Row(
+                        ? const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const SizedBox(
+                              SizedBox(
                                 height: 18,
                                 width: 18,
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2, color: Colors.white),
                               ),
-                              const SizedBox(width: 10),
-                              Text(
-                                _isUploadingResume
-                                    ? 'Uploading resume...'
-                                    : 'Submitting...',
-                                style: const TextStyle(color: Colors.white),
-                              ),
+                              SizedBox(width: 10),
+                              Text('Submitting...', style: TextStyle(color: Colors.white)),
                             ],
                           )
                         : const Text('Submit Application', style: TextStyle(fontSize: 16)),
