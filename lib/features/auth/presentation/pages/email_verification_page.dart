@@ -26,7 +26,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
   }
 
   void _startPolling() {
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       context.read<AuthCubit>().checkEmailVerification();
     });
   }
