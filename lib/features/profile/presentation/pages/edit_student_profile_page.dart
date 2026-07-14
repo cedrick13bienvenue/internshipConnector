@@ -67,10 +67,10 @@ class _EditStudentProfilePageState extends State<EditStudentProfilePage> {
     }
   }
 
-  Future<void> _save() async {
+  void _save() {
     if (_nameController.text.trim().isEmpty || _saving) return;
     setState(() => _saving = true);
-    await context.read<AuthCubit>().updateStudentProfile(
+    context.read<AuthCubit>().updateStudentProfile(
       fullName: _nameController.text.trim(),
       bio: _bioController.text.trim(),
       skills: _selectedSkills.toList(),
