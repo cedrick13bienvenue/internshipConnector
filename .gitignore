@@ -56,3 +56,7 @@ firebase.json
 *.env
 .env*
 secrets.dart
+
+# Admin seeding script credentials
+scripts/serviceAccountKey.json
+scripts/node_modules/
