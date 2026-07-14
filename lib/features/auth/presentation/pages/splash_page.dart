@@ -50,12 +50,15 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (_currentPage < _slides.length - 1) {
-        _pageController.nextPage(
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
+        if (_pageController.hasClients) {
+          _pageController.nextPage(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
       } else {
         _timer?.cancel();
         _goToLogin();
@@ -70,10 +73,12 @@ class _SplashPageState extends State<SplashPage> {
 
   void _nextSlide() {
     if (_currentPage < _slides.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
+      if (_pageController.hasClients) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
     } else {
       _goToLogin();
     }
