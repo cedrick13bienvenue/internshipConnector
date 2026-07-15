@@ -50,3 +50,21 @@ ALU Connect bridges ALU students seeking internship experience with student-led 
 - Separate dashboard accessible only to the `admin` role
 - Review and approve pending startup registrations (flips `isVerified` in Firestore)
 - Admin account provisioned via Firebase Admin SDK seeding script (not the public signup flow)
+
+---
+
+## Architecture
+
+ALU Connect follows a strict three-layer architecture:
+
+```
+UI (Widgets)  →  BLoC / Cubit  →  Repository  →  Firebase
+     ↑                ↑                              |
+     └────────────────┴──────── state stream ────────┘
+```
+
+- **UI layer** — stateless widgets that render from BLoC/Cubit state. No direct Firestore calls anywhere in the UI.
+- **BLoC / Cubit layer** — owns feature state (auth, opportunity feed, applications, notifications). Emits immutable state; widgets subscribe via `BlocBuilder` / `BlocListener`.
+- **Repository layer** — the sole layer that talks to Firestore. All reads use `.snapshots()` streams for real-time updates. Isolating this layer means the backend can be swapped without touching UI or state code.
+- **GoRouter** — declarative, role-aware routing. The `redirect` function enforces: unverified → `/verify-email`, not onboarded → `/onboarding`, admin → `/admin`, everyone else → `/home`.
+- **Conditional imports** — `web.dart` / `stub.dart` pairs isolate any browser-only API (e.g. `dart:html` for iframe resume embedding) so the same feature code compiles for both web and mobile targets.
