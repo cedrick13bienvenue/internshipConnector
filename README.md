@@ -210,17 +210,33 @@ scripts/
 
 ---
 
-## Getting Started
+## Local Setup — Complete Guide
 
-### Prerequisites
+Follow every step in order. The app will not run if any step is skipped.
 
-- Flutter 3.32+ and Dart 3.8+ (`flutter --version`)
-- Chrome browser (the app targets Flutter web)
-- A Firebase project with **Authentication** (Email/Password) and **Firestore** enabled
-- A Cloudinary account with an unsigned upload preset for profile photos
-- Node.js 18+ (only needed to run the admin seeding script)
+---
 
-### 1. Clone and install dependencies
+### Step 1 — Install Flutter
+
+1. Download the Flutter SDK from [docs.flutter.dev/get-started/install](https://docs.flutter.dev/get-started/install) for your OS
+2. Extract and add the `flutter/bin` folder to your `PATH`
+3. Verify:
+
+```bash
+flutter --version
+# should print Flutter 3.32.x • Dart 3.8.x
+```
+
+4. Install Chrome if you don't have it — the app targets Flutter web only
+5. Run the Flutter doctor to check for any missing dependencies:
+
+```bash
+flutter doctor
+```
+
+---
+
+### Step 2 — Clone the repository
 
 ```bash
 git clone https://github.com/<your-username>/alu-connect.git
@@ -228,24 +244,28 @@ cd alu-connect
 flutter pub get
 ```
 
-### 2. Configure Firebase
+`flutter pub get` downloads all Dart/Flutter packages listed in `pubspec.yaml`.
 
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable **Email/Password** under Authentication → Sign-in method
-3. Create a Firestore database (Start in production mode is fine; rules below)
-4. Register a **Web** app and download the config
-5. Run `flutterfire configure` (requires `dart pub global activate flutterfire_cli`) — this generates `lib/firebase_options.dart` which is gitignored
+---
 
-### 3. Configure environment variables
+### Step 3 — Create a Firebase project
 
-Create a `.env` file at the project root (gitignored):
+1. Go to [console.firebase.google.com](https://console.firebase.google.com) and click **Add project**
+2. Give it a name (e.g. `alu-connect`), disable Google Analytics if you don't need it, click **Create project**
 
-```env
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
-```
+#### Enable Email/Password Authentication
 
-### 4. Firestore security rules (recommended minimum)
+1. In the Firebase console, go to **Build → Authentication → Get started**
+2. Under **Sign-in method**, click **Email/Password** and toggle it **Enabled** → Save
+
+#### Create a Firestore database
+
+1. Go to **Build → Firestore Database → Create database**
+2. Choose **Start in production mode** → select a region close to you → **Enable**
+
+#### Apply security rules
+
+In the Firestore console go to **Rules** tab and paste:
 
 ```
 rules_version = '2';
@@ -272,49 +292,142 @@ service cloud.firestore {
 }
 ```
 
-### 5. Run the app
-
-```bash
-flutter run -d chrome
-```
-
-Open Chrome DevTools → Toggle device toolbar and pick a phone viewport for the intended mobile layout.
+Click **Publish**.
 
 ---
 
-## Admin Account Setup
+### Step 4 — Connect Flutter to Firebase (FlutterFire CLI)
 
-The admin account cannot be created through the normal signup flow. It must be provisioned server-side using the Firebase Admin SDK seeding script.
+1. Install the FlutterFire CLI:
 
-### One-time setup
+```bash
+dart pub global activate flutterfire_cli
+```
+
+2. Log in to Firebase from the terminal:
+
+```bash
+firebase login
+```
+
+3. Inside the project root, run:
+
+```bash
+flutterfire configure
+```
+
+- Select your Firebase project from the list
+- Select only **Web** as the target platform
+- This generates `lib/firebase_options.dart` — it is gitignored and must never be committed
+
+---
+
+### Step 5 — Set up Cloudinary (profile photo uploads)
+
+1. Create a free account at [cloudinary.com](https://cloudinary.com)
+2. From the **Dashboard**, note your **Cloud name** (shown at the top)
+3. Go to **Settings → Upload → Upload presets → Add upload preset**
+   - Set **Signing mode** to **Unsigned**
+   - Give it a name (e.g. `alu_connect_unsigned`)
+   - Save
+
+---
+
+### Step 6 — Create the `.env` file
+
+In the project root, create a file named `.env` (gitignored — never commit it):
+
+```env
+CLOUDINARY_CLOUD_NAME=your_cloud_name_here
+CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset_name_here
+```
+
+Replace the values with what you copied from the Cloudinary dashboard.
+
+---
+
+### Step 7 — Seed the admin account
+
+The admin user cannot sign up through the app. It must be created server-side using the Firebase Admin SDK seeding script.
+
+#### 7a. Install Node.js dependencies
 
 ```bash
 cd scripts
 npm install firebase-admin
 ```
 
-Download your **Service Account Key** from Firebase Console → Project Settings → Service Accounts → Generate new private key. Save the file as `scripts/serviceAccountKey.json` (it is gitignored — never commit it).
+#### 7b. Download your Service Account Key
 
-### Run the script
+1. In the Firebase console, go to **Project Settings → Service Accounts**
+2. Click **Generate new private key** → **Generate key** — a JSON file downloads
+3. Rename it `serviceAccountKey.json` and place it inside the `scripts/` folder
+
+> This file contains sensitive credentials. It is gitignored — never commit it.
+
+#### 7c. Run the seeding script
 
 ```bash
 node seed_admin.js
 ```
 
-The script will:
-1. Look up any existing user with `admin@aluconnect.com` in Firebase Auth and delete them
-2. Delete the corresponding Firestore `users/` document if it exists
-3. Create a fresh Auth user with `emailVerified: true`
-4. Write the Firestore document with `role: 'admin'`, `isOnboarded: true`
+Expected output:
 
-**Admin credentials**
+```
+Deleted existing auth user: ...   (or: No existing admin user found...)
+Created auth user: <uid>
+Firestore user doc created
+
+✓ Admin seeded successfully
+  Email:    admin@aluconnect.com
+  Password: Admin@2026
+```
+
+#### Admin credentials
 
 | Field | Value |
 |-------|-------|
 | Email | `admin@aluconnect.com` |
 | Password | `Admin@2026` |
 
-> Change the password in the Firebase Console after first login.
+> Re-run the script any time you lose access to the admin account — it will delete and re-create it.
+
+Go back to the project root after running the script:
+
+```bash
+cd ..
+```
+
+---
+
+### Step 8 — Run the app
+
+```bash
+flutter run -d chrome
+```
+
+Chrome will open automatically. To simulate a mobile viewport:
+
+1. Open **Chrome DevTools** (F12 or Cmd+Option+I)
+2. Click the **Toggle device toolbar** icon (phone/tablet icon)
+3. Pick any phone preset (e.g. iPhone 12 Pro)
+
+---
+
+### Full setup checklist
+
+| # | Step | Done |
+|---|------|------|
+| 1 | Flutter 3.32+ installed and `flutter doctor` passes | ☐ |
+| 2 | Repository cloned and `flutter pub get` run | ☐ |
+| 3 | Firebase project created with Auth + Firestore enabled | ☐ |
+| 4 | Firestore rules published | ☐ |
+| 5 | `flutterfire configure` run — `lib/firebase_options.dart` generated | ☐ |
+| 6 | Cloudinary account created with an unsigned upload preset | ☐ |
+| 7 | `.env` file created with Cloudinary values | ☐ |
+| 8 | `scripts/serviceAccountKey.json` added | ☐ |
+| 9 | `node seed_admin.js` run successfully | ☐ |
+| 10 | `flutter run -d chrome` launches the app | ☐ |
 
 ---
 
