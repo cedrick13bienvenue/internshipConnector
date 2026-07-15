@@ -207,3 +207,75 @@ scripts/
 | `createdAt` | Timestamp | written by `ApplicationRepository.updateStatus` |
 
 > Notifications are queried with a single `.where('userId')` filter and sorted in-memory to avoid requiring a Firestore composite index.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Flutter 3.32+ and Dart 3.8+ (`flutter --version`)
+- Chrome browser (the app targets Flutter web)
+- A Firebase project with **Authentication** (Email/Password) and **Firestore** enabled
+- A Cloudinary account with an unsigned upload preset for profile photos
+- Node.js 18+ (only needed to run the admin seeding script)
+
+### 1. Clone and install dependencies
+
+```bash
+git clone https://github.com/<your-username>/alu-connect.git
+cd alu-connect
+flutter pub get
+```
+
+### 2. Configure Firebase
+
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable **Email/Password** under Authentication → Sign-in method
+3. Create a Firestore database (Start in production mode is fine; rules below)
+4. Register a **Web** app and download the config
+5. Run `flutterfire configure` (requires `dart pub global activate flutterfire_cli`) — this generates `lib/firebase_options.dart` which is gitignored
+
+### 3. Configure environment variables
+
+Create a `.env` file at the project root (gitignored):
+
+```env
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
+```
+
+### 4. Firestore security rules (recommended minimum)
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth.uid == uid;
+    }
+    match /startups/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /opportunities/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    match /applications/{id} {
+      allow read, write: if request.auth != null;
+    }
+    match /notifications/{id} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+### 5. Run the app
+
+```bash
+flutter run -d chrome
+```
+
+Open Chrome DevTools → Toggle device toolbar and pick a phone viewport for the intended mobile layout.
