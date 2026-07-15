@@ -344,3 +344,28 @@ The demo covers:
 | Student | Application status tracker (Applied → Accepted) |
 | Startup | Applicants tab grouped by opportunity |
 | Admin | Dashboard — pending startup approval queue |
+
+---
+
+## Technical Report
+
+The full technical report, including system design decisions, data flow diagrams, ERD, and evaluation against the assignment rubric, is available in the repository:
+
+> [`CedricBienvenue_FinalFlutterProject.pdf`](CedricBienvenue_FinalFlutterProject.pdf)
+
+### Key design decisions documented in the report
+
+- **BLoC/Cubit over setState** — Chosen for clear separation of business logic and testability across features with complex async flows (auth, applications, notifications)
+- **Firestore streams over polling** — Real-time `snapshots()` throughout so the UI reflects backend state without manual refresh
+- **Single-field queries + in-memory sort** — Avoids composite Firestore index requirements on the free Spark plan while preserving sort order
+- **Optimistic state emit** — Cubits emit new state before the Firestore write completes; users see instant feedback without waiting for round-trip latency
+- **Conditional web/stub imports** — Isolates `dart:html` usage so startup resume embedding compiles cleanly on all targets
+- **Admin SDK seeding** — Admin account created server-side to bypass the public signup flow; avoids a fake email recovery scenario
+
+---
+
+## License
+
+This project was built for the ALU Flutter Development final assignment (July 2026).
+
+© 2026 Cedrick Bienvenue · African Leadership University
