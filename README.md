@@ -279,3 +279,39 @@ flutter run -d chrome
 ```
 
 Open Chrome DevTools → Toggle device toolbar and pick a phone viewport for the intended mobile layout.
+
+---
+
+## Admin Account Setup
+
+The admin account cannot be created through the normal signup flow. It must be provisioned server-side using the Firebase Admin SDK seeding script.
+
+### One-time setup
+
+```bash
+cd scripts
+npm install firebase-admin
+```
+
+Download your **Service Account Key** from Firebase Console → Project Settings → Service Accounts → Generate new private key. Save the file as `scripts/serviceAccountKey.json` (it is gitignored — never commit it).
+
+### Run the script
+
+```bash
+node seed_admin.js
+```
+
+The script will:
+1. Look up any existing user with `admin@aluconnect.com` in Firebase Auth and delete them
+2. Delete the corresponding Firestore `users/` document if it exists
+3. Create a fresh Auth user with `emailVerified: true`
+4. Write the Firestore document with `role: 'admin'`, `isOnboarded: true`
+
+**Admin credentials**
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@aluconnect.com` |
+| Password | `Admin@2026` |
+
+> Change the password in the Firebase Console after first login.
