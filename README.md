@@ -315,3 +315,32 @@ The script will:
 | Password | `Admin@2026` |
 
 > Change the password in the Firebase Console after first login.
+
+---
+
+## Demo
+
+### Video Walkthrough
+
+[![ALU Connect Demo](https://img.shields.io/badge/Watch%20Demo-YouTube-red?logo=youtube)](https://youtu.be/oFa65CZeCs4)
+
+> **[https://youtu.be/oFa65CZeCs4](https://youtu.be/oFa65CZeCs4)**
+
+The demo covers:
+- Student signup with ALU email + email verification
+- Student onboarding (skills, program)
+- Startup registration and pending verification state
+- Admin login and startup approval flow
+- Posting, closing, and deleting an opportunity
+- Student applying with a cover note and resume link
+- Startup managing applicants (star, status update)
+- In-app notification received by the student
+
+### Screenshots
+
+| Role | Screen |
+|------|--------|
+| Student | Opportunity feed with category filters and live search |
+| Student | Application status tracker (Applied → Accepted) |
+| Startup | Applicants tab grouped by opportunity |
+| Admin | Dashboard — pending startup approval queue |
