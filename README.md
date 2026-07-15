@@ -1,16 +1,9 @@
-# internship_connector
+# ALU Connect
 
-A new Flutter project.
+**A role-based mobile platform connecting ALU students with campus startup opportunities.**
 
-## Getting Started
+ALU Connect bridges ALU students seeking internship experience with student-led startups and early-stage ventures on campus. Startups post opportunities; students discover, apply, and track their applications in real time — replacing informal word-of-mouth and scattered group-chat postings that currently mediate this exchange.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+> **Demo Video:** [https://youtu.be/oFa65CZeCs4](https://youtu.be/oFa65CZeCs4)
+> **Technical Report:** [`CedricBienvenue_FinalFlutterProject.pdf`](CedricBienvenue_FinalFlutterProject.pdf)
+> **Author:** Cedrick Bienvenue · ALU · July 2026
