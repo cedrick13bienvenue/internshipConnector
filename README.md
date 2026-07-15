@@ -136,3 +136,74 @@ lib/
 scripts/
 └── seed_admin.js         # Firebase Admin SDK script to provision admin account
 ```
+
+---
+
+## Firebase / Firestore Schema
+
+### Collections
+
+**`users/{uid}`**
+| Field | Type | Notes |
+|-------|------|-------|
+| `uid` | string | matches Firebase Auth UID |
+| `email` | string | must end in `@alustudent.com` |
+| `fullName` | string | |
+| `role` | `student` \| `startup` \| `admin` | drives routing and UI |
+| `isOnboarded` | bool | false until onboarding wizard completes |
+| `isEmailVerified` | bool | mirrored from Firebase Auth |
+| `bio` | string? | student only |
+| `skills` | string[] | student only |
+| `program` | string? | student only |
+| `photoUrl` | string? | Cloudinary CDN URL |
+| `savedOpportunities` | string[] | opportunity IDs bookmarked by student |
+| `createdAt` | Timestamp | |
+
+**`startups/{startupId}`**
+| Field | Type | Notes |
+|-------|------|-------|
+| `ownerId` | string | user UID of founding startup member |
+| `name` | string | |
+| `description` | string | |
+| `categories` | string[] | used for filtering |
+| `websiteUrl` | string? | |
+| `verificationStatus` | `pending` \| `verified` | admin toggles to `verified` |
+| `logoUrl` | string? | |
+| `createdAt` | Timestamp | |
+
+**`opportunities/{opportunityId}`**
+| Field | Type | Notes |
+|-------|------|-------|
+| `startupId` | string | |
+| `startupName` | string | denormalized for card display |
+| `title` | string | |
+| `description` | string | |
+| `category` | string | |
+| `type` | string | e.g. Internship, Part-time |
+| `status` | `open` \| `closed` | startup can close without deleting |
+| `postedAt` | Timestamp | |
+
+**`applications/{applicationId}`**
+| Field | Type | Notes |
+|-------|------|-------|
+| `opportunityId` | string | |
+| `startupId` | string | |
+| `studentId` | string | |
+| `studentName` | string | denormalized |
+| `studentEmail` | string | denormalized for startup to copy |
+| `coverNote` | string | |
+| `resumeUrl` | string | Google Drive / Dropbox link |
+| `status` | `applied` \| `under_review` \| `shortlisted` \| `interview` \| `accepted` \| `rejected` | |
+| `isStarred` | bool | startup stars applicants |
+| `appliedAt` | Timestamp | |
+
+**`notifications/{notificationId}`**
+| Field | Type | Notes |
+|-------|------|-------|
+| `userId` | string | student receiving the notification |
+| `title` | string | |
+| `body` | string | |
+| `isRead` | bool | |
+| `createdAt` | Timestamp | written by `ApplicationRepository.updateStatus` |
+
+> Notifications are queried with a single `.where('userId')` filter and sorted in-memory to avoid requiring a Firestore composite index.
