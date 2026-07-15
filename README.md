@@ -68,3 +68,71 @@ UI (Widgets)  →  BLoC / Cubit  →  Repository  →  Firebase
 - **Repository layer** — the sole layer that talks to Firestore. All reads use `.snapshots()` streams for real-time updates. Isolating this layer means the backend can be swapped without touching UI or state code.
 - **GoRouter** — declarative, role-aware routing. The `redirect` function enforces: unverified → `/verify-email`, not onboarded → `/onboarding`, admin → `/admin`, everyone else → `/home`.
 - **Conditional imports** — `web.dart` / `stub.dart` pairs isolate any browser-only API (e.g. `dart:html` for iframe resume embedding) so the same feature code compiles for both web and mobile targets.
+
+---
+
+## Folder Structure
+
+```
+lib/
+├── core/
+│   ├── constants/        # Colors, app constants, strings
+│   ├── router/           # GoRouter setup and role-based redirect logic
+│   ├── theme/            # App theme
+│   └── utils/            # Validators, toast helpers
+│
+└── features/
+    ├── auth/
+    │   ├── data/
+    │   │   ├── models/   # UserModel
+    │   │   └── repositories/ # AuthRepository (Firebase Auth + Firestore)
+    │   └── presentation/
+    │       ├── cubit/    # AuthCubit + AuthState
+    │       └── pages/    # Login, Signup, Onboarding, EmailVerification, Splash
+    │
+    ├── opportunities/
+    │   ├── data/
+    │   │   ├── models/   # OpportunityModel
+    │   │   └── repositories/ # OpportunityRepository (CRUD + streams)
+    │   └── presentation/
+    │       ├── cubit/    # OpportunityCubit + OpportunityState
+    │       ├── pages/    # Detail, Post, Edit, Explore
+    │       └── widgets/  # OpportunityCard, BookmarkButton
+    │
+    ├── applications/
+    │   ├── data/
+    │   │   ├── models/   # ApplicationModel (status pipeline, isStarred)
+    │   │   └── repositories/ # ApplicationRepository (updateStatus writes notification)
+    │   └── presentation/
+    │       └── pages/    # Form, ApplicantsTab, OpportunityApplicants, ApplicantDetail, ResumeViewer
+    │
+    ├── startups/
+    │   ├── data/
+    │   │   ├── models/   # StartupModel
+    │   │   └── repositories/ # StartupRepository
+    │   └── presentation/
+    │       ├── cubit/    # StartupCubit
+    │       └── pages/    # Profile, Registration, Edit
+    │
+    ├── notifications/
+    │   ├── data/
+    │   │   ├── models/   # NotificationModel
+    │   │   └── repositories/ # NotificationRepository (single-field query + in-memory sort)
+    │   └── presentation/
+    │       └── pages/    # NotificationsPage
+    │
+    ├── home/
+    │   └── presentation/
+    │       └── pages/    # HomeTabPage (student + startup views), MainShellPage
+    │
+    ├── profile/
+    │   └── presentation/
+    │       └── pages/    # ProfileTabPage, EditStudentProfilePage
+    │
+    └── admin/
+        └── presentation/
+            └── pages/    # AdminDashboardPage (startup approval)
+
+scripts/
+└── seed_admin.js         # Firebase Admin SDK script to provision admin account
+```
